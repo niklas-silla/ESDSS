@@ -2,3 +2,5 @@ langgraph
 langchain
 pydantic
 grandalf # for graph visualization in the terminal
+docling
+numpy<2

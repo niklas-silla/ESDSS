@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from graph.nodes.docling import greeting_node
+from graph.nodes.docling import docling_node
 from graph.state import AgentState
 
 # build a graph
@@ -8,15 +8,15 @@ def build_graph():
 
 
     # add nodes
-    graph.add_node("greeter", greeting_node)
+    graph.add_node("docling", docling_node)
 
     # startpoint
-    graph.add_edge(START, "greeter")
+    graph.add_edge(START, "docling")
 
     # edges & conditions
     # graph.add_edge("", "")
 
     # endpoint
-    graph.add_edge("greeter", END)
+    graph.add_edge("docling", END)
 
     return graph
