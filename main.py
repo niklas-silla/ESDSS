@@ -8,5 +8,5 @@ if __name__ == "__main__":
     # visualize_graph_png(graph=app)
     visualize_graph_terminal(graph=app)
 
-    result = app.invoke({})
+    result = app.invoke({"manuscript_path": "data/manuscripts/ELMA-D-24-00001-High-Quality development and Resilience of Cross-border E-commerce Enterprises.pdf"})
     print(result)

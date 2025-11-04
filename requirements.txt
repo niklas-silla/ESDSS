@@ -2,5 +2,6 @@ langgraph
 langchain
 pydantic
 grandalf # for graph visualization in the terminal
-docling
+docling # for PDF to Markdown conversion
 numpy<2
+pymupdf # for PDF pre-processing
