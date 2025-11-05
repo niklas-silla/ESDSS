@@ -15,6 +15,10 @@ def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     """
     Node to preprocess a PDF manuscript.
     """
+    agent_name="preprocessing"
+    state[agent_name]["status"]= "running"
+    print("Preprocessing runs ...")
+
     pdf_path = state["manuscript_path"]
     preprocessed_pdf_path = Path("data/preprocessed_manuscript.pdf")
     output_path = Path("data")
@@ -34,7 +38,8 @@ def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     state["number_of_tables"] = result["number_of_tables"]
     state["number_of_pictures"] = result["number_of_pictures"]
     state["images"] = result["images"]
-
+    
+    state[agent_name]["status"]= "success"
     return state
 
 
