@@ -1,7 +1,9 @@
 langgraph
 langchain
+langsmith # for LangSmith integration
 pydantic
 grandalf # for graph visualization in the terminal
 docling # for PDF to Markdown conversion
 numpy<2
 pymupdf # for PDF pre-processing
+python-dotenv # for environment variable management

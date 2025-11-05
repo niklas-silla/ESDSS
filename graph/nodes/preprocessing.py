@@ -11,6 +11,7 @@ from docling_core.types.doc import PictureItem, TableItem
 from pathlib import Path
 import fitz  # PyMuPDF library for PDF processing
 
+
 def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     """
     Node to preprocess a PDF manuscript.
