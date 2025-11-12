@@ -7,3 +7,11 @@ docling # for PDF to Markdown conversion
 numpy<2
 pymupdf # for PDF pre-processing
 python-dotenv # for environment variable management
+opencv-python # OpenCV for image processing (lapalacian operator)
+textstat # for text statistics (readability scores)
+langchain_ollama # ollama chatmodel for local llms
+langchain_openai # OpenAI chatmodel 
+
+# Additional:
+# python -m spacy download en_core_web_md
+# python -m spacy download en_core_web_sm

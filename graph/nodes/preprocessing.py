@@ -10,6 +10,7 @@ from docling.datamodel.pipeline_options import PictureDescriptionVlmOptions
 from docling_core.types.doc import PictureItem, TableItem
 from pathlib import Path
 import fitz  # PyMuPDF library for PDF processing
+import re # regular expressions
 
 
 def manuscript_preprocessing_node(state: AgentState) -> AgentState:
@@ -140,6 +141,10 @@ def docling_converter(input_path: str, output_path: Path) -> tuple[str, int, int
 
     # 4. Export md manuscript
     md_document = docling_doc.export_to_markdown()
+
+    # 5. clean and save md document
+    md_document = clean_markdown(md_document)
+    
     with (output_path / "manuscript.md").open("w") as f: 
         f.write(md_document)
 
@@ -168,3 +173,19 @@ def docling_converter(input_path: str, output_path: Path) -> tuple[str, int, int
 
     # 6. return results
     return {"md_manuscript_path": output_path / "manuscript.md", "number_of_tables": table_counter, "number_of_pictures": picture_counter, "images": image_path_list}
+
+
+def clean_markdown(md_text: str) -> str:
+    """
+    Clean the markdown text by removing unwanted formatting issues.
+    """
+    # remove unwanted patterns like <!-- ... -->
+    md_text = re.sub(r'<!--.*?-->', '', md_text, flags=re.DOTALL)
+
+    # remove multiple spaces and newlines
+    md_text = re.sub(r'[ \t]+', ' ', md_text)
+    md_text = re.sub(r'\n{3,}', '\n\n', md_text)
+
+    # remove leading and trailing whitespace
+    md_text = md_text.strip()
+    return md_text
