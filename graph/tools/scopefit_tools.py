@@ -5,14 +5,14 @@ from pathlib import Path
 from llm_config import get_llm, get_embedding
 from langchain.agents import create_agent
 from pydantic import BaseModel, Field
-from langchain_ollama import OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
 import fitz # PyMuPDF
 import re
+from langchain_core.messages import SystemMessage, HumanMessage
 
 embeddings = get_embedding()
-current_dir = os.path.dirname(os.path.abspath(__file__))
-vectorstore_path = os.path.join(current_dir, "vectorstore_em_paper")
+current_dir = Path(__file__).parent
+vectorstore_path = current_dir / "vectorstore_em_paper"
 
 vector_store = FAISS.load_local(vectorstore_path, embeddings, allow_dangerous_deserialization=True)
 
@@ -102,11 +102,11 @@ def calculate_cosine_similarity(manuscript_data):
 class AgentReport(BaseModel):
     """Report of an Criteria Agent"""
     report: str = Field(description="Concise criteria report of max 200 words")
-    score: int = Field(ge=1, le=10, description="Criteria score 1-10")
+    score: int = Field(ge=0, le=10, description="Criteria score 0-10")
 
 
 def generate_scopefit_report(manuscript_data: dict, neighbor_info: str, title_cs_median: float, abstract_cs_median: float) -> dict:
-    agent_prompt = f"""
+    user_prompt = f"""
         1. New Manuscript
         Title: {manuscript_data["title"]}
         Abstract: {manuscript_data["abstract"]}
@@ -122,11 +122,10 @@ def generate_scopefit_report(manuscript_data: dict, neighbor_info: str, title_cs
         TASK:
         Write a concise academic report (max 200 words) assessing whether the manuscript is in scope for EM.
         Use qualitative reasoning (scope text + semantic neighbors) and quantitative reasoning (cosine similarity).
-        Then assign a Scope-Fit Score from 0–10."""
-
-    agent = create_agent(
-        model= get_llm(),
-        system_prompt = """You are an Academic Scope-Fit Assessment Assistant.
+        Then assign a Scope-Fit Score from 0–10.
+        Use strict the provided output format."""
+    
+    system_prompt = """You are an Academic Scope-Fit Assessment Assistant.
                             Your task is to evaluate whether a new manuscript fits the scope of the Electronic Markets (EM) Journal.
                             You must strictly follow the instructions and output format.
                                
@@ -135,13 +134,28 @@ def generate_scopefit_report(manuscript_data: dict, neighbor_info: str, title_cs
                             In a broader sense, price discovery is not critical for Electronic Markets. These solutions emphasize longer-term relationships and processes for enabling business transactions (e.g., electronic procurement solutions) and/or knowledge management (e.g., product development, problem and incident management). EM covers diverse aspects of networked business and welcomes research from a technological, organizational, societal, and/or political perspective. Since EM is a methodologically pluralistic journal, quantitative and qualitative research methods are both welcome as long as the studies are methodologically sound. Conceptual and theory-development papers, empirical hypothesis testing, and case-based studies are all welcome.
 
                             Use only the given information to make the decision:
-                            Use strict the provided output format.""",
-        response_format = AgentReport
-    )
+                            Use strict the provided output format."""
 
-    print(agent_prompt)
-    result = agent.invoke({
-        "messages": [{"role": "user", "content": agent_prompt}]
-    })
+    # OPTION: AGENT
+    #agent = create_agent(
+    #    model= get_llm(),
+    #    system_prompt = system_prompt,
+    #    response_format = AgentReport
+    #)
+    #result = agent.invoke({
+    #    "messages": [{"role": "user", "content": user_prompt}]
+    #})
+    # return result["structured_response"].dict()
+
+    # OPTION: LLM
+    llm = get_llm()
+    structured_llm = llm.with_structured_output(AgentReport)
     
-    return result["structured_response"].dict()
+    result = structured_llm.invoke([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_prompt)
+    ])
+
+    return result.dict()
+    
+    

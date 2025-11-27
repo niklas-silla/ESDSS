@@ -4,6 +4,7 @@ import textstat # for readability scores
 from llm_config import get_llm
 from langchain.agents import create_agent
 from pydantic import BaseModel, Field
+from langchain_core.messages import SystemMessage, HumanMessage
 
 def analyze_images(image_paths: list) -> str:
     """
@@ -86,20 +87,29 @@ class AgentReport(BaseModel):
 
 def generate_quality_report(image_quality: str, readability_scores: dict) -> dict:
     
-    agent_prompt = f"Input data:\n\nText Readability Scores:\n{readability_scores}\nImage Quality:\n{image_quality}"
+    user_prompt = f"Input data:\n\nText Readability Scores:\n{readability_scores}\nImage Quality:\n{image_quality}"
+    system_prompt = """You are an academic quality assessment assistant.
+                       Your task is to generate a concise (≤200 words) quality report for a scientific manuscript based on the inputs: readability scores and image quality summary.
+                       Use the input data to assess: how appropriate the manuscript’s readability is for an academic paper, how good the overall sharpness of the images is and how these factors reflect the manuscript’s overall quality.
+                       Summarize this in a short report of maximum 200 words and give a quality score from 1 to 10.
+                       Use the provided Format."""
 
-    agent = create_agent(
-        model= get_llm(),
-        system_prompt = "You are an academic quality assessment assistant." \
-                        "Your task is to generate a concise (≤200 words) quality report for a scientific manuscript based on the inputs: readability scores and image quality summary." \
-                        "Use the input data to assess: how appropriate the manuscript’s readability is for an academic paper, how good the overall sharpness of the images is and how these factors reflect the manuscript’s overall quality."\
-                        "Summarize this in a short report of maximum 200 words and give a quality score from 1 to 10." \
-                        "Use the provided Format.",
-        response_format = AgentReport
-    )
+    # OPTION: AGENT
+    #agent = create_agent(
+    #    model= get_llm(),
+    #    system_prompt = system_prompt,
+    #    response_format = AgentReport
+    #)
+    #result = agent.invoke({
+    #    "messages": [{"role": "user", "content": user_prompt}]
+    #})
+    #return result["structured_response"].dict()
 
-    result = agent.invoke({
-        "messages": [{"role": "user", "content": agent_prompt}]
-    })
-    
-    return result["structured_response"].dict()
+    # OPTION: LLM
+    llm = get_llm()
+    structured_llm = llm.with_structured_output(AgentReport)
+    result = structured_llm.invoke([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_prompt)
+    ])
+    return result.dict()
