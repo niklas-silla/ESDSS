@@ -11,6 +11,8 @@ opencv-python # OpenCV for image processing (lapalacian operator)
 textstat # for text statistics (readability scores)
 langchain_ollama # ollama chatmodel for local llms
 langchain_openai # OpenAI chatmodel 
+faiss-cpu # vectorstore
+langchain-community # for other integrations like FAISS
 
 # Additional:
 # python -m spacy download en_core_web_md

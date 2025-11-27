@@ -1,38 +1,38 @@
 from graph.state import AgentState
-from llm_config import get_llm
 from graph.tools.quality_tools import analyze_images, compute_readability_scores, generate_quality_report
 from langgraph.graph import StateGraph, START, END
+
+AGENT="quality_agent"
 
 def quality_check_node(state: AgentState) -> AgentState:
     """
     Node to check the quality aspects of a PDF manuscript.
     """
-    agent_name="quality_agent"
-    state[agent_name]["status"]= "running"
+    state[AGENT]["status"]= "running"
 
     state = sub_graph.invoke(state)
 
-    state[agent_name]["status"]= "success"
-    return state[agent_name]
+    state[AGENT]["status"]= "success"
+    return state[AGENT]
 
 
 # -----------
 #  Sub Nodes
 # -----------
 def analyze_images_node(state: AgentState):
-    state["quality_agent"]["data"]["imagequality"] = analyze_images(state["images"])
+    state[AGENT]["data"]["imagequality"] = analyze_images(state["images"])
     return state
 
 def readability_node(state: AgentState):
-    state["quality_agent"]["data"]["textquality"] = compute_readability_scores(state["md_manuscript_path"])
+    state[AGENT]["data"]["textquality"] = compute_readability_scores(state["md_manuscript_path"])
     return state
 
 def report_node(state: AgentState):
-    result = state["quality_report"] = generate_quality_report(
-        state["quality_agent"]["data"]["imagequality"],
-        state["quality_agent"]["data"]["textquality"]
+    report = generate_quality_report(
+        state[AGENT]["data"]["imagequality"],
+        state[AGENT]["data"]["textquality"]
     )
-    state["quality_agent"]["data"].update(result)
+    state[AGENT]["data"].update(report)
     return state
 
 # -----------

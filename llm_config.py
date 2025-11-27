@@ -7,7 +7,10 @@ To easily change provider and model.
 
 from typing import Literal, Optional
 from langchain_ollama import ChatOllama
+from langchain_ollama import OllamaEmbeddings
 from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+
 
 # === LLM PROVIDER ===
 ACTIVE_PROVIDER: Literal["ollama", "openai"] = "ollama"
@@ -22,13 +25,15 @@ DEFAULT_MAX_TOKENS = 4096
 # --- Ollama Modelle ---
 OLLAMA_MODELS = {
     "simple": "gpt-oss:120b",
-    "reasoning": "gpt-oss:120b"
+    "reasoning": "gpt-oss:120b",
+    "embedding": "embeddinggemma:latest"
 }
 
 # --- OpenAI Modelle ---
 OPENAI_MODELS = {
     "simple": "gpt-4o-mini",
-    "reasoning": "gpt-4o"
+    "reasoning": "gpt-4o",
+    "embedding": "text-embedding-3-large"
 }
 
 
@@ -38,7 +43,7 @@ OPENAI_MODELS = {
 
 def get_llm(mode: Optional[str] = None):
     """
-    Returns a LLM instance based on global or specified configuration.
+    Returns a LLM instance based on global configuration.
     """
     mode = mode or ACTIVE_MODE
 
@@ -57,3 +62,16 @@ def get_llm(mode: Optional[str] = None):
             temperature=DEFAULT_TEMPERATURE,
             max_tokens=DEFAULT_MAX_TOKENS,
         )
+    
+def get_embedding():
+    """
+    Returns a embedding instance based on global configuration.
+    """
+
+    if ACTIVE_PROVIDER == "ollama":
+        model = OLLAMA_MODELS["embedding"]
+        return OllamaEmbeddings(model=model)
+
+    elif ACTIVE_PROVIDER == "openai":
+        model = OPENAI_MODELS["embedding"]
+        return OpenAIEmbeddings
