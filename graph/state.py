@@ -9,6 +9,7 @@ class AgentResult(TypedDict):
 # The state schema
 class AgentState(TypedDict):
     manuscript_path: str
+    preprocessed_manuscript_path: str
     md_manuscript_path: str
     md_report_path: str
     number_of_tables: int
@@ -32,6 +33,7 @@ def create_initial_state(manuscript_path: str) -> AgentState:
     """Create new AgentState with default values."""
     return {
         "manuscript_path": manuscript_path,
+        "preprocessed_manuscript_path": None,
         "md_manuscript_path": None,
         "md_report_path": None,
         "number_of_tables": 0,

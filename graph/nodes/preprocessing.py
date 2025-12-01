@@ -36,6 +36,7 @@ def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     result = docling_converter(preprocessed_pdf_path, output_path)
 
     # Step 3: update state
+    state["preprocessed_manuscript_path"] = preprocessed_pdf_path
     state["md_manuscript_path"] = result["md_manuscript_path"]
     state["number_of_tables"] = result["number_of_tables"]
     state["number_of_pictures"] = result["number_of_pictures"]

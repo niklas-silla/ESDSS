@@ -107,7 +107,7 @@ def search_arxiv(queries, max_results=5, max_retries=5) -> List:
 
 
 class InnovationCheckResult(BaseModel):
-    innovation_report: str
+    report: str
     score: int
 
 
