@@ -1,4 +1,5 @@
 from graph.state import AgentState
+from graph.visualizer import visualize_graph_png
 from graph.tools.innovation_tools import extract_innovation_statement, search_semantic_scholar, search_arxiv, innovation_report_agent
 from langgraph.graph import StateGraph, START, END
 
@@ -52,3 +53,4 @@ quality_graph.add_edge("arxiv", "report")
 quality_graph.add_edge("report", END)
 
 sub_graph = quality_graph.compile()
+visualize_graph_png(graph = sub_graph, filename = "innovation_agent_subgraph.png")

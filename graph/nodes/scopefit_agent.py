@@ -1,4 +1,5 @@
 from graph.state import AgentState
+from graph.visualizer import visualize_graph_png
 from graph.tools.scopefit_tools import extract_manuscript_data, calculate_cosine_similarity, generate_scopefit_report
 from langgraph.graph import StateGraph, START, END
 
@@ -20,7 +21,7 @@ def scope_fit_node(state: AgentState) -> AgentState:
 #  Sub Nodes
 # -----------
 def manuscript_extract_node(state: AgentState):
-    state[AGENT]["data"]["manuscript_data"] = extract_manuscript_data(state["manuscript_path"])
+    state[AGENT]["data"]["manuscript_data"] = extract_manuscript_data(state["original_manuscript_path"])
     return state
 
 def cosine_similarity_calculator_node(state: AgentState):
@@ -52,3 +53,4 @@ quality_graph.add_edge("cs_calculator", "report")
 quality_graph.add_edge("report", END)
 
 sub_graph = quality_graph.compile()
+visualize_graph_png(graph = sub_graph, filename = "scopefit_agent_subgraph.png")

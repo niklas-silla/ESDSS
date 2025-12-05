@@ -1,4 +1,5 @@
 from graph.state import AgentState
+from graph.visualizer import visualize_graph_png
 from graph.tools.method_tools import create_vectorstore, method_analysis
 from langgraph.graph import StateGraph, START, END
 
@@ -41,3 +42,4 @@ quality_graph.add_edge("create_vectorstore_node", "method_analysis_node")
 quality_graph.add_edge("method_analysis_node", END)
 
 sub_graph = quality_graph.compile()
+visualize_graph_png(graph = sub_graph, filename = "method_agent_subgraph.png")

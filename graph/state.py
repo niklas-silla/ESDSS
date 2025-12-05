@@ -6,20 +6,22 @@ class AgentResult(TypedDict):
     error: Optional[str]
     retries: int
 
-# The state schema
+# State schema
 class AgentState(TypedDict):
-    manuscript_path: str
+    original_manuscript_path: str
     preprocessed_manuscript_path: str
     md_manuscript_path: str
-    md_report_path: str
-    number_of_tables: int
-    number_of_pictures: int
     images: list[str]
+    artifacts_folder: str
     message: str
+
+    # orchestrator
     workflow_step: int
     success_logged: set[str]  # Tracking which Agents have already been logged
     next_node: list[str]  # To handle dynamic next nodes
-    preprocessing: AgentResult
+
+    # agents
+    preprocessing_agent: AgentResult
     format_agent: AgentResult
     innovation_agent: AgentResult
     method_agent: AgentResult
@@ -28,22 +30,27 @@ class AgentState(TypedDict):
     scopefit_agent: AgentResult
     report_agent: AgentResult
 
+    # final decision
+    deskreject: bool
+    final_report: str
 
-def create_initial_state(manuscript_path: str) -> AgentState:
-    """Create new AgentState with default values."""
+
+def create_initial_state(original_manuscript_path: str, artifacts_folder: str) -> AgentState:
+    """
+    Create new AgentState with default values.
+    """
+    
     return {
-        "manuscript_path": manuscript_path,
+        "original_manuscript_path": original_manuscript_path,
         "preprocessed_manuscript_path": None,
         "md_manuscript_path": None,
-        "md_report_path": None,
-        "number_of_tables": 0,
-        "number_of_pictures": 0,
         "images": [],
+        "artifacts_folder": artifacts_folder,
         "message": "",
         "workflow_step": 0,
         "success_logged": set(),
         "next_node": [],
-        "preprocessing": {
+        "preprocessing_agent": {
             "status": "pending",
             "data": {},
             "error": None,
@@ -91,4 +98,6 @@ def create_initial_state(manuscript_path: str) -> AgentState:
             "error": None,
             "retries": 0
         },
+        "deskreject": None,
+        "final_report": None,
     }

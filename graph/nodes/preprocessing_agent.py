@@ -12,18 +12,18 @@ from pathlib import Path
 import fitz  # PyMuPDF library for PDF processing
 import re # regular expressions
 
+AGENT = "preprocessing_agent"
 
 def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     """
     Node to preprocess a PDF manuscript.
     """
-    agent_name="preprocessing"
-    state[agent_name]["status"]= "running"
-    print("Preprocessing runs ...")
+    state[AGENT]["status"]= "running"
 
-    pdf_path = state["manuscript_path"]
-    preprocessed_pdf_path = Path("data/preprocessed_manuscript.pdf")
-    output_path = Path("data")
+    pdf_path = state["original_manuscript_path"]
+    output_path = Path(state["artifacts_folder"])
+    preprocessed_pdf_path = output_path / "preprocessed_manuscript.pdf"
+    
 
     # Step 1: preprocess manuscript for better docling conversion 
     doc = fitz.open(pdf_path)
@@ -31,18 +31,19 @@ def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     doc = remove_linenumbers_and_headers(doc)
     doc.save(preprocessed_pdf_path)
     doc.close()
+    print(f"💾 preprocessed_manuscript.pdf saved.")
 
     # Step 2: Convert with Docling
     result = docling_converter(preprocessed_pdf_path, output_path)
 
     # Step 3: update state
-    state["preprocessed_manuscript_path"] = preprocessed_pdf_path
-    state["md_manuscript_path"] = result["md_manuscript_path"]
-    state["number_of_tables"] = result["number_of_tables"]
-    state["number_of_pictures"] = result["number_of_pictures"]
+    state["preprocessed_manuscript_path"] = str(preprocessed_pdf_path)
+    state["md_manuscript_path"] = str(result["md_manuscript_path"])
+    state[AGENT]["data"]["number_of_tables"] = result["number_of_tables"]
+    state[AGENT]["data"]["number_of_pictures"] = result["number_of_pictures"]
     state["images"] = result["images"]
     
-    state[agent_name]["status"]= "success"
+    state[AGENT]["status"]= "success"
     return state
 
 
@@ -73,13 +74,10 @@ def cut_off_cover_pages(doc: fitz.Document) -> fitz.Document:
     elif last_titlepage_index + 1 != start_blindedmanuscript_index:
         print(f"Can't determine cut-off point reliably. Last 'Title Page' at index {last_titlepage_index}, 'Blinded Manuscript' at index {start_blindedmanuscript_index}.")
         return doc # return original file if cut-off point is unclear
-    
-    print(f"Cut-off point after page {last_titlepage_index + 1}")
 
     # 4. delete pages before "Blinded Manuscript"
     if start_blindedmanuscript_index > 0:
         doc.delete_pages(0, start_blindedmanuscript_index - 1)
-        print("Cover pages were cut off.")
 
     return doc
 
@@ -98,10 +96,7 @@ def remove_linenumbers_and_headers(doc: fitz.Document) -> fitz.Document:
         # --- Headers ---
         header_rect = fitz.Rect(0, 0, page.rect.width, 60)
         page.add_redact_annot(header_rect, fill=(1, 1, 1))
-
         page.apply_redactions()
-
-    print("Linenumbers & Headers removed.")
 
     return doc
 
@@ -148,6 +143,7 @@ def docling_converter(input_path: str, output_path: Path) -> tuple[str, int, int
     
     with (output_path / "manuscript.md").open("w") as f: 
         f.write(md_document)
+    print(f"💾 manuscript.md saved.")
 
     # 5. Save images of figures and tables
     table_counter = 0

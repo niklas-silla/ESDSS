@@ -14,7 +14,7 @@ langchain_openai # OpenAI chatmodel
 faiss-cpu # vectorstore
 langchain-community # for other integrations like FAISS
 feedparser # for RSS feed parsing (Arxiv)
-
+tqdm # progressbar 
 # Additional:
 # python -m spacy download en_core_web_md
 # python -m spacy download en_core_web_sm

@@ -6,7 +6,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
     Node to orchestrate the worker agents.
     """
     # Set agent names
-    preprocessing_agent ="preprocessing" 
+    preprocessing_agent ="preprocessing_agent" 
     criterion_agents = ["format_agent", "innovation_agent", "method_agent", "plagiarism_agent", "quality_agent", "scopefit_agent"]
     report_agent = "report_agent"
 
@@ -15,6 +15,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
     
     # workflow step 0: start preprocessing
     if state["workflow_step"] == 0:
+        print("🔄 preprocessing started ...")
         state["workflow_step"] += 1
         state["message"] = "Starting preprocessing of the manuscript."
         state["next_node"] = [preprocessing_agent]
@@ -27,16 +28,20 @@ def orchestrator_node(state: AgentState) -> AgentState:
         retries = state[preprocessing_agent]["retries"]
 
         if status == "success" and state["md_manuscript_path"] is not None:
+            print("✅ preprocessing completed successfully")
+            print("🔄 criteria agents started...")
             state["workflow_step"] += 1
             state["message"] = "Preprocessing completed successfully. Proceeding to criterion checks."
             state["next_node"] = criterion_agents
             return state
         elif status == "failed" and retries < 2:
+            print("🔄 preprocessing failed, retrying ...")
             state[preprocessing_agent]["retries"] += 1
             state["message"] = f"Preprocessing failed. Retrying preprocessing (Attempt {retries + 1})."
             state["next_node"] = [preprocessing_agent]
             return state
         else:
+            print("❌ preprocessing failed, retrying ...")
             state["message"] = "Preprocessing failed after multiple attempts. Aborting workflow."
             state["next_node"] = [END]
             return state  # End workflow
@@ -81,6 +86,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
                 state["message"] = "All workers completed but some failed"
             
             state["workflow_step"] += 1
+            print("🔄 report generation started...")
             state["next_node"] = [report_agent]
             return state
         
@@ -97,17 +103,20 @@ def orchestrator_node(state: AgentState) -> AgentState:
         status = state[report_agent]["status"]
         retries = state[report_agent]["retries"]
 
-        if status == "success" and state["md_report_path"] is not None:
+        if status == "success":
+            print("✅ report generated successfully.")
             state["workflow_step"] += 1
             state["message"] = "Report successfully generated. Workflow completed."
             state["next_node"] = [END]
             return state  # End workflow
         elif status == "failed" and retries < 2:
+            print("🔄 report generation failed, retrying ...")
             state[report_agent]["retries"] += 1
             state["message"] = f"Report generation failed. Retrying report generation (Attempt {retries + 1})."
             state["next_node"] = [report_agent]
             return state
         else:
+            print("❌ preprocessing failed, retrying ...")
             state["message"] = "Report generation failed after multiple attempts. Aborting workflow."
             state["next_node"] = [END]
             return state  # End workflow

@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from graph.nodes.preprocessing import manuscript_preprocessing_node
+from graph.nodes.preprocessing_agent import manuscript_preprocessing_node
 from graph.nodes.orchestrator import orchestrator_node, orchestrator_decision
 from graph.nodes.format_agent import format_check_node
 from graph.nodes.innovation_agent import innovation_check_node
@@ -11,11 +11,15 @@ from graph.nodes.report_agent import report_generator_node
 from graph.state import AgentState
 
 def build_graph():
+    """
+    Build the graph of the Editorial Screening Decision Support System (ESDSS) according to the designed architecture.
+    """
+    print("🔄 build graph")
     graph = StateGraph(AgentState)
 
-    # add nodes
+    # nodes
     graph.add_node("orchestrator", orchestrator_node)
-    graph.add_node("preprocessing", manuscript_preprocessing_node)
+    graph.add_node("preprocessing_agent", manuscript_preprocessing_node)
     graph.add_node("format_agent", format_check_node)
     graph.add_node("innovation_agent", innovation_check_node)
     graph.add_node("method_agent", method_check_node)
@@ -30,10 +34,10 @@ def build_graph():
     # edges
     graph.add_conditional_edges(
         "orchestrator", # source
-        orchestrator_decision, # path
+        orchestrator_decision, # decide which path
         {
             # Edge: Node
-            "preprocessing": "preprocessing",
+            "preprocessing_agent": "preprocessing_agent",
             "format_agent": "format_agent",
             "innovation_agent": "innovation_agent",
             "method_agent": "method_agent",
@@ -46,10 +50,14 @@ def build_graph():
         }
     )
     # all worker agents report to orchestrator
-    for agent in ["preprocessing", "format_agent", "innovation_agent", "method_agent", "plagiarism_agent", "quality_agent", "scopefit_agent", "report_agent"]:
+    for agent in ["preprocessing_agent", "format_agent", "innovation_agent", "method_agent", "plagiarism_agent", "quality_agent", "scopefit_agent", "report_agent"]:
         graph.add_edge(agent, "orchestrator")
 
     # endpoint
     graph.add_edge("orchestrator", END)
 
-    return graph
+    # compile graph
+    app = graph.compile()
+
+    print("✅ graph created")
+    return app

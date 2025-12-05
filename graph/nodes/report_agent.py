@@ -76,8 +76,7 @@ def report_generator_node(state: AgentState) -> AgentState:
         "quality_agent_report": quality_agent_report,
     })
 
-    state["report_agent"]["data"] = response.model_dump()
-    state["md_report_path"]= ""
+    state.update(response.model_dump())
     state[AGENT]["status"]= "success"
     
     return state

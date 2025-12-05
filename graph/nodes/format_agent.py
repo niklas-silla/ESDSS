@@ -1,4 +1,5 @@
 from graph.state import AgentState
+from graph.visualizer import visualize_graph_png
 from graph.tools.format_tools import formatting_check, section_check, format_report_agent
 from langgraph.graph import StateGraph, START, END
 
@@ -46,3 +47,4 @@ quality_graph.add_edge("formatting_check", "report")
 quality_graph.add_edge("report", END)
 
 sub_graph = quality_graph.compile()
+visualize_graph_png(graph = sub_graph, filename = "format_agent_subgraph.png")

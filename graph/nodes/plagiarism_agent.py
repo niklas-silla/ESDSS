@@ -7,9 +7,8 @@ def plagiarism_detection_node(state: AgentState) -> AgentState:
     
     agent_name="plagiarism_agent"
     state[agent_name]["status"]= "running"
-    print("Plagiarism detection Agent runs ...")
     
-    # Simulate innovation checking logic here
+    # Plagiarism detection Agent skipped.
     
     state[agent_name]["status"]= "success"
     return state[agent_name]

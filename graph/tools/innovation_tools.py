@@ -12,7 +12,6 @@ class InnovationStatementResult(BaseModel):
     search_queries: List[str]
 
 def extract_innovation_statement(manuscript_md_path) -> dict:
-        print(manuscript_md_path)
         """extract innovation statement from the text"""
 
         # 1. open md file

@@ -1,4 +1,5 @@
 from graph.state import AgentState
+from graph.visualizer import visualize_graph_png
 from graph.tools.quality_tools import analyze_images, compute_readability_scores, generate_quality_report
 from langgraph.graph import StateGraph, START, END
 
@@ -49,3 +50,4 @@ quality_graph.add_edge("readability", "report")
 quality_graph.add_edge("report", END)
 
 sub_graph = quality_graph.compile()
+visualize_graph_png(graph = sub_graph, filename = "quality_agent_subgraph.png")
