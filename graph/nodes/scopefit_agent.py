@@ -42,15 +42,15 @@ def report_node(state: AgentState):
 # -----------
 #  Sub Graph
 # -----------
-quality_graph = StateGraph(AgentState)
-quality_graph.add_node("extractor", manuscript_extract_node)
-quality_graph.add_node("cs_calculator", cosine_similarity_calculator_node)
-quality_graph.add_node("report", report_node)
+scopefit_graph = StateGraph(AgentState)
+scopefit_graph.add_node("extractor", manuscript_extract_node)
+scopefit_graph.add_node("cs_calculator", cosine_similarity_calculator_node)
+scopefit_graph.add_node("report", report_node)
 
-quality_graph.add_edge(START, "extractor")
-quality_graph.add_edge("extractor", "cs_calculator")
-quality_graph.add_edge("cs_calculator", "report")
-quality_graph.add_edge("report", END)
+scopefit_graph.add_edge(START, "extractor")
+scopefit_graph.add_edge("extractor", "cs_calculator")
+scopefit_graph.add_edge("cs_calculator", "report")
+scopefit_graph.add_edge("report", END)
 
-sub_graph = quality_graph.compile()
+sub_graph = scopefit_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "scopefit_agent_subgraph.png")

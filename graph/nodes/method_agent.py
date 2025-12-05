@@ -32,14 +32,14 @@ def method_analysis_node(state: AgentState):
 # -----------
 #  Sub Graph
 # -----------
-quality_graph = StateGraph(AgentState)
-quality_graph.add_node("create_vectorstore_node", create_vectorstore_node)
-quality_graph.add_node("method_analysis_node", method_analysis_node)
+method_graph = StateGraph(AgentState)
+method_graph.add_node("create_vectorstore_node", create_vectorstore_node)
+method_graph.add_node("method_analysis_node", method_analysis_node)
 
 
-quality_graph.add_edge(START, "create_vectorstore_node")
-quality_graph.add_edge("create_vectorstore_node", "method_analysis_node")
-quality_graph.add_edge("method_analysis_node", END)
+method_graph.add_edge(START, "create_vectorstore_node")
+method_graph.add_edge("create_vectorstore_node", "method_analysis_node")
+method_graph.add_edge("method_analysis_node", END)
 
-sub_graph = quality_graph.compile()
+sub_graph = method_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "method_agent_subgraph.png")

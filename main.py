@@ -56,7 +56,6 @@ if __name__ == "__main__":
             json.dump(result, f, indent=4)
 
         # add row in csv file
-        print(result)
         with open(csv_file, mode="a", newline="", encoding="utf-8") as f:    # mode a = append
             writer = csv.writer(f)
             writer.writerow([m_id, 

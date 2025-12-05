@@ -40,17 +40,17 @@ def innovation_report_node(state: AgentState):
 # -----------
 #  Sub Graph
 # -----------
-quality_graph = StateGraph(AgentState)
-quality_graph.add_node("extract_innovation", extract_innovation_node)
-quality_graph.add_node("semantic_scholar", semantic_scholar_node)
-quality_graph.add_node("arxiv", arxiv_node)
-quality_graph.add_node("report", innovation_report_node)
+innovation_graph = StateGraph(AgentState)
+innovation_graph.add_node("extract_innovation", extract_innovation_node)
+innovation_graph.add_node("semantic_scholar", semantic_scholar_node)
+innovation_graph.add_node("arxiv", arxiv_node)
+innovation_graph.add_node("report", innovation_report_node)
 
-quality_graph.add_edge(START, "extract_innovation")
-quality_graph.add_edge("extract_innovation", "semantic_scholar")
-quality_graph.add_edge("semantic_scholar", "arxiv")
-quality_graph.add_edge("arxiv", "report")
-quality_graph.add_edge("report", END)
+innovation_graph.add_edge(START, "extract_innovation")
+innovation_graph.add_edge("extract_innovation", "semantic_scholar")
+innovation_graph.add_edge("semantic_scholar", "arxiv")
+innovation_graph.add_edge("arxiv", "report")
+innovation_graph.add_edge("report", END)
 
-sub_graph = quality_graph.compile()
+sub_graph = innovation_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "innovation_agent_subgraph.png")
