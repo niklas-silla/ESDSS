@@ -1,13 +1,14 @@
 from graph.state import AgentState
 from llm_config import get_llm
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 
 AGENT = "report_agent"
 
-class FormatReport(BaseModel):
-    deskreject: bool
-    final_report: str
+class FinalReport(BaseModel):
+    """Final report of Report Agent"""
+    deskreject: bool = Field(description="Decision whether the manuscript gets a desk reject: true or false")
+    final_report: str = Field(description="Concise final report of max. 12 sentences")
 
 def report_generator_node(state: AgentState) -> AgentState:
     """
@@ -65,7 +66,7 @@ def report_generator_node(state: AgentState) -> AgentState:
         ("system", system_prompt),
         ("user", user_prompt)
     ])
-    structured_llm = get_llm().with_structured_output(FormatReport)
+    structured_llm = get_llm().with_structured_output(FinalReport)
     chain = prompt | structured_llm
 
     response = chain.invoke({

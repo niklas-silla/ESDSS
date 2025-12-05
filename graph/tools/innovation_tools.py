@@ -1,6 +1,6 @@
 from llm_config import get_llm
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 import requests
 import feedparser
@@ -8,8 +8,9 @@ import time
 import re
 
 class InnovationStatementResult(BaseModel):
-    innovation_statement: str
-    search_queries: List[str]
+    """Result of Innovation Statement Agent"""
+    innovation_statement: str = Field(description="Identified core innovation statement of the manuscript.")
+    search_queries: List[str] = Field(description="List of search queries.")
 
 def extract_innovation_statement(manuscript_md_path) -> dict:
         """extract innovation statement from the text"""
@@ -23,29 +24,30 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
         markdown_text = re.sub(r'<!-- image -->\n?', '', markdown_text)
 
         # 3. build prompt with context
-        prompt = ChatPromptTemplate.from_messages([
-            ("system",
-            """
-            You are an expert scientific analysis agent.
-            Your task is to (1) extract the core innovation of a scientific manuscript and (2) generate high-quality search queries that can be used to assess the novelty of that innovation.
-            Use only the provided manuscript text!
-            """
-            ),
-            ("user",
-            """
-            MANUSCRIPT:
-            {markdown_text}
+        system_prompt = """
+            You are an expert in extracting the core innovation of a scientific manuscript.
+            Your task is: 
+            1) to extract the core innovation of a scientific manuscript and 
+            2) to generate high-quality search queries that can be used to search for the innovation in the web.
 
+            Use only the content of the provided manuscript.
+            Return information strictly according to the fields defined in the output schema.
+            Do not produce explanations outside the schema fields.
+            """
+        user_prompt = """
             Analyze the manuscript in the following structure:
-            1. Extract the core innovation of the manuscript.
-            2. Generate 2 short search queries consisting of keywords (max 6 words) to search for the presented innovation in the web.
+            1) Extract the core innovation of the manuscript.
+            2) Generate 2 short search queries consisting of max. 6 keywords.
             The search queries should collectively cover the innovation statement of the manuscript.
             """
-            )
-        ])
+        
         
         # 4. invoke structured output llm 
         structured_llm = get_llm().with_structured_output(InnovationStatementResult)
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("user", user_prompt)
+        ])
         chain = prompt | structured_llm
         analysis = chain.invoke({
             "markdown_text": markdown_text
@@ -105,42 +107,51 @@ def search_arxiv(queries, max_results=5, max_retries=5) -> List:
     return results
 
 
-class InnovationCheckResult(BaseModel):
-    report: str
-    score: int
+class InnovationReport(BaseModel):
+    """Report of Innovation Agent"""
+    report: str = Field(description="Concise innovation report of max 200 words")
+    score: int = Field(ge=0, le=10, description="Innovation score 0-10")
 
 
 def innovation_report_agent(innovation_statement, web_results_semschol, web_results_arxiv):
     
     # 1. Build prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system",
+    system_prompt = """
+        You are an rigorous scientific reviewer for a scientific journal.
+
+        Your task is to assess the novelty of a manuscript’s core innovation using the provided search results from Semantic Scholar and arXiv.
+        You must provide:
+        1) A concise innovation report (maximum 200 words) describing whether the manuscript innovation is novel or not.
+        2) A innovation score from 0 to 10, where:
+            - 0 = not novel  
+            - 10 = highly novel
+
+        Do not make assumptions beyond the supplied data.
+        Return information strictly according to the fields defined in the output schema.
+        Do not produce explanations outside the schema fields.
         """
-        You are an expert scientific reviewer.
-        Your task is to assess the novelty of a scientific innovation based on search results from Semantic Scholar and arXiv.
-        Provide a short report (max 200 words) and a novelty score from 0 (not novel) to 10 (highly novel).
-        """
-        ),
-        ("user",
-        """
+    user_prompt = """
+        Here are the analysis results:
+
         Manuscript Innovation:
         {core_innovation}
 
         Websearch Results:
         {websearch_results}
 
-        Based on these results, decide if the manuscript innovation is novel. 
-        Return a innovation score (0-10) and a innovation report (max 200 words)
+        Based on these inputs, generate your innovation assessment.
         """
-        )
-    ])
     
     # 2. Prepare strings of search results
     websearch_results = web_results_semschol + web_results_arxiv
     websearch_results = "\n".join([f"{r.get('title')}: {r.get('abstract','')}" for r in websearch_results])
     
     # 3. Invoke LLM and generate report
-    llm = get_llm().with_structured_output(InnovationCheckResult)
+    llm = get_llm().with_structured_output(InnovationReport)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("user", user_prompt)
+        ])
     chain = prompt | llm
     response = chain.invoke({
         "core_innovation": innovation_statement,

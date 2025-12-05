@@ -43,14 +43,14 @@ def report_node(state: AgentState):
 #  Sub Graph
 # -----------
 scopefit_graph = StateGraph(AgentState)
-scopefit_graph.add_node("extractor", manuscript_extract_node)
-scopefit_graph.add_node("cs_calculator", cosine_similarity_calculator_node)
-scopefit_graph.add_node("report", report_node)
+scopefit_graph.add_node("extract_title_abstract", manuscript_extract_node)
+scopefit_graph.add_node("calculate_cosine_similarity", cosine_similarity_calculator_node)
+scopefit_graph.add_node("generate_report", report_node)
 
-scopefit_graph.add_edge(START, "extractor")
-scopefit_graph.add_edge("extractor", "cs_calculator")
-scopefit_graph.add_edge("cs_calculator", "report")
-scopefit_graph.add_edge("report", END)
+scopefit_graph.add_edge(START, "extract_title_abstract")
+scopefit_graph.add_edge("extract_title_abstract", "calculate_cosine_similarity")
+scopefit_graph.add_edge("calculate_cosine_similarity", "generate_report")
+scopefit_graph.add_edge("generate_report", END)
 
 sub_graph = scopefit_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "scopefit_agent_subgraph.png")

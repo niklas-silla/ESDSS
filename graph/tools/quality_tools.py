@@ -2,9 +2,8 @@ from pathlib import Path
 import cv2 # OpenCV for image processing (lapalacian operator)
 import textstat # for readability scores
 from llm_config import get_llm
-from langchain.agents import create_agent
 from pydantic import BaseModel, Field
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.prompts import ChatPromptTemplate
 
 def analyze_images(image_paths: list) -> str:
     """
@@ -79,37 +78,51 @@ def compute_readability_scores(md_path: Path) -> dict:
 
     return results
 
-class AgentReport(BaseModel):
-    """Report of an Criteria Agent"""
+class QualityReport(BaseModel):
+    """Report of Quality Agent"""
     report: str = Field(description="Concise quality report of max 200 words")
-    score: int = Field(ge=1, le=10, description="Quality score 1-10")
+    score: int = Field(ge=0, le=10, description="Quality score 0-10")
 
 
 def generate_quality_report(image_quality: str, readability_scores: dict) -> dict:
     
-    user_prompt = f"Input data:\n\nText Readability Scores:\n{readability_scores}\nImage Quality:\n{image_quality}"
-    system_prompt = """You are an academic quality assessment assistant.
-                       Your task is to generate a concise (≤200 words) quality report for a scientific manuscript based on the inputs: readability scores and image quality summary.
-                       Use the input data to assess: how appropriate the manuscript’s readability is for an academic paper, how good the overall sharpness of the images is and how these factors reflect the manuscript’s overall quality.
-                       Summarize this in a short report of maximum 200 words and give a quality score from 1 to 10.
-                       Use the provided Format."""
+    # Build a prompt with context
+    system_prompt = """
+        You are an rigorous scientific reviewer for a scientific journal.
 
-    # OPTION: AGENT
-    #agent = create_agent(
-    #    model= get_llm(),
-    #    system_prompt = system_prompt,
-    #    response_format = AgentReport
-    #)
-    #result = agent.invoke({
-    #    "messages": [{"role": "user", "content": user_prompt}]
-    #})
-    #return result["structured_response"].dict()
+        Your task is to assess the quality of a scientific manuscript based on the inputs: readability scores and image quality summary.
+        Use the input data to assess: how appropriate the manuscript’s readability is for an academic paper, how good the overall sharpness of the images is and how these factors reflect the manuscript’s overall quality.
+        You must provide:
+        1) A concise quality report (maximum 200 words)  
+        2) A quality score from 0 to 10, where:
+            - 0 = poor image quality; readability scores are not appropriate for a scientific paper  
+            - 10 = excellent image quality; readability scores are appropriate for a scientific paper
 
-    # OPTION: LLM
-    llm = get_llm()
-    structured_llm = llm.with_structured_output(AgentReport)
-    result = structured_llm.invoke([
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=user_prompt)
+        Do not make assumptions beyond the supplied data.
+        Return information strictly according to the fields defined in the output schema.
+        Do not produce explanations outside the schema fields.
+        """
+    user_prompt = """
+        Here are the analysis results:
+
+        Text readability scores:
+        {readability_scores}
+
+        Image quality:
+        {image_quality}
+
+        Based on these inputs, generate your quality assessment.
+        """
+
+    # Invoke LLM
+    structured_llm = get_llm().with_structured_output(QualityReport)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("user", user_prompt)
     ])
-    return result.dict()
+    chain = prompt | structured_llm
+    response = chain.invoke({
+        "readability_scores": readability_scores,
+        "image_quality": image_quality
+    })
+    return response.model_dump()

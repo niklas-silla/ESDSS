@@ -1,5 +1,5 @@
 import fitz # PyMuPD
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 import re
 from rapidfuzz import fuzz
@@ -7,28 +7,33 @@ from collections import Counter
 from llm_config import get_llm
 
 class SectionCheckResult(BaseModel):
-    introduction: bool
-    methods: bool
-    results: bool
-    discussion: bool
-    conclusion: bool
-    references: bool
-    section_report: str
+    """Result of Section Check Agent"""
+    introduction: bool = Field(description="Section Introduction present: true or false")
+    methods: bool = Field(description="Section Methods present: true or false")
+    results: bool = Field(description="Section Results present: true or false")
+    discussion: bool = Field(description="Section Discussion present: true or false")
+    conclusion: bool = Field(description="Section Conclusion present: true or false")
+    references: bool = Field(description="Section References present: true or false")
+    section_report: str = Field(description="Short section report of max 50 words")
 
 def section_check(md_manuscript_path):
+    # 1. open markdown file
     with open(md_manuscript_path, "r", encoding="utf-8") as f:
         markdown_text = f.read()
 
-    # 2. build prompt with context
-    prompt = ChatPromptTemplate.from_messages([
-        ("user",
-        """
-        MANUSCRIPT:
-        {manuscript_md}
+    # 2. build prompts with context
+    system_prompt = """
+        You are an expert in the content structure of scientific manuscripts.
 
-        You are an expert scientific analysis agent.
-        Your task is to check whether all required sections of a scientific paper are present in the Manuscript, regardless of their exact wording, numbering, or formatting.
-        Check the provided manuscript text for the following required sections:
+        Your task is to analyze a given manuscript and determine whether required sections of a scientific paper are present. 
+        Consider variations in wording, numbering styles, subheadings, and Markdown heading levels. 
+        
+        Use only the content of the provided manuscript.
+        Return information strictly according to the fields defined in the output schema.
+        Do not produce explanations outside the schema fields.
+        """
+    user_prompt = """
+        Analyze the following manuscript and check whether the following scientific sections are present:
         - Introduction
         - Methods
         - Results
@@ -36,19 +41,24 @@ def section_check(md_manuscript_path):
         - Conclusion
         - References
 
-        Consider alternative spellings, numbering styles, subheadings, and different Markdown heading levels.
         Return for each section, whether it is present or not (true or false).
-        Additional give a short report of max. 50 words.
+        The field `section_report` should contain a concise summary of max. 50 words.
+
+        Manuscript:
+        {manuscript_md}
         """
-        )
-    ])
     
+    # 3. invoke llm
     structured_llm = get_llm().with_structured_output(SectionCheckResult)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("user", user_prompt)
+    ])
     chain = prompt | structured_llm
     analysis = chain.invoke({
         "manuscript_md": markdown_text
     })
-    return analysis.model_dump()
+    return analysis.model_dump() # return dict
     
 
 def formatting_check(preprocessed_manuscript_path, md_path):
@@ -157,35 +167,45 @@ def formatting_check(preprocessed_manuscript_path, md_path):
 
 
 class FormatReport(BaseModel):
-    report: str
-    score: int
+    """Report of Format Agent"""
+    report: str = Field(description="Concise format report of max 200 words")
+    score: int = Field(ge=0, le=10, description="Format score 0-10")
 
 def format_report_agent(formatting_results, presence_required_sections):
     
     # Build a prompt with context
-    prompt = ChatPromptTemplate.from_messages([
-        ("system",
+    system_prompt = """
+        You are an rigorous scientific reviewer for a scientific journal.
+
+        Your task is to assess the formatting quality of a scientific manuscript based solely on the provided section-presence information and formatting-analysis results.  
+        You must provide:
+        1) A concise formatting report (maximum 200 words) describing the strengths and weaknesses.  
+        2) A format score from 0 to 10, where:
+            - 0 = very poor formatting; many required sections missing  
+            - 10 = excellent formatting; all required sections present 
+
+        Do not make assumptions beyond the supplied data.
+        Return information strictly according to the fields defined in the output schema.
+        Do not produce explanations outside the schema fields.
         """
-        You are an expert scientific reviewer.
-        Your task is to assess the format of a scientific manuscript based on the completeness of the required sections and the formatting results of headings and text.
-        Provide a short report (max 200 words) and a format score from 0 (poor formatting and many required sections missing) to 10 (perfect formatting and all required sections present).
-        """
-        ),
-        ("user",
-        """
-        Presence Required sections:
+    user_prompt = """
+        Here are the analysis results:
+
+        Presence of required sections:
         {presence_required_sections}
 
-        Formatting Results:
+        Formatting analysis:
         {formatting_results}
 
-        Based on these results, decide about the manuscript formating. 
+        Based on these inputs, generate your formatting assessment.
         """
-        )
-    ])
     
     # Invoke LLM
     structured_llm = get_llm().with_structured_output(FormatReport)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("user", user_prompt)
+    ])
     chain = prompt | structured_llm
     response = chain.invoke({
         "presence_required_sections": presence_required_sections,

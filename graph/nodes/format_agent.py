@@ -37,14 +37,14 @@ def format_report_node(state: AgentState):
 #  Sub Graph
 # -----------
 format_graph = StateGraph(AgentState)
-format_graph.add_node("section_check", section_check_node)
-format_graph.add_node("formatting_check", formatting_check_node)
-format_graph.add_node("report", format_report_node)
+format_graph.add_node("check_section", section_check_node)
+format_graph.add_node("check_formatting", formatting_check_node)
+format_graph.add_node("generate_report", format_report_node)
 
-format_graph.add_edge(START, "section_check")
-format_graph.add_edge("section_check", "formatting_check")
-format_graph.add_edge("formatting_check", "report")
-format_graph.add_edge("report", END)
+format_graph.add_edge(START, "check_section")
+format_graph.add_edge("check_section", "check_formatting")
+format_graph.add_edge("check_formatting", "generate_report")
+format_graph.add_edge("generate_report", END)
 
 sub_graph = format_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "format_agent_subgraph.png")

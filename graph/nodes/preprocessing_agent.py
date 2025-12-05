@@ -40,11 +40,12 @@ def docling_node(state: AgentState):
 #  Sub Graph
 # -----------
 preprocessing_graph = StateGraph(AgentState)
-preprocessing_graph.add_node("preprocessing_node", preprocessing_node)
-preprocessing_graph.add_node("docling_node", docling_node)
-preprocessing_graph.add_edge(START, "preprocessing_node")
-preprocessing_graph.add_edge("preprocessing_node", "docling_node")
-preprocessing_graph.add_edge("docling_node", END)
+preprocessing_graph.add_node("preprocessing", preprocessing_node)
+preprocessing_graph.add_node("run_docling", docling_node)
+
+preprocessing_graph.add_edge(START, "preprocessing")
+preprocessing_graph.add_edge("preprocessing", "run_docling")
+preprocessing_graph.add_edge("run_docling", END)
 
 sub_graph = preprocessing_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "preprocessing_subgraph.png")

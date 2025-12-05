@@ -3,7 +3,7 @@ from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharac
 from langchain_community.vectorstores import FAISS
 from llm_config import get_embedding, get_llm
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pathlib import Path
 
 embedding = get_embedding()
@@ -52,49 +52,70 @@ def create_vectorstore(md_path) -> FAISS:
     return vectorstore
 
 
-class MethodCheckResult(BaseModel):
-    research_question: str
-    rq_report: str
-    methodology_report: str
-    score: int
+class MethodReport(BaseModel):
+    """Report of Method Agent"""
+    research_question: str = Field(description="Extracted research question of the manuscript")
+    rq_report: str = Field(description="Concise research question report of max 100 words")
+    methodology_report: str = Field(description="Concise methodology report of max 100 words")
+    score: int = Field(ge=0, le=10, description="Methodology score 0-10")
 
 def method_analysis(vectorstore) -> dict:
         """Analyse the research question, methodology and implementation"""
         
+        # define retrieval queries
         retrieval_queries = {
             "research_question": "research question hypothesis aim objective purpose goal",
             "methodology": "methodology methods approach design procedure experimental setup",
         }
 
-        # 1. retrieve all relevant sections for each query
-        contexts = {}
+        # retrieve all relevant sections for each query
+        context = {}
         for key, query in retrieval_queries.items():
             sections = vectorstore.similarity_search(query, k=10)
-            contexts[key] = "\n\n".join(sec.page_content for sec in sections)
+            context[key] = "\n\n".join(sec.page_content for sec in sections)
         
-        # 2. build prompt with context
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", 
-            "You are a senior reviewer for a scientific journal. "
-            "Provide a rigorous, critical, structured assessment. "
-            "Use only the provided manuscript excerpts."),
+        return context
 
-            ("user",
-            "=== CONTEXT: RESEARCH QUESTION ===\n{rq_context}\n\n"
-            "=== CONTEXT: METHODOLOGY ===\n{method_context}\n\n"
-            "Analyze the manuscript in the following structure:\n\n"
-            "1. Extract the research question precisely.\n"
-            "2. Assess the quality, clarity and scientific rigor of the research question (max 100 words).\n"
-            "3. Assess the methodological rigor, appropriateness and design (max 150 words).\n"
-            "4. Provide a final Score: 0 to 10.\n\n")
-        ])
+def method_report_agent(context):
+        # 2. build prompt with context
+        system_prompt = """
+            You are an rigorous scientific reviewer for a scientific journal.
+
+            Your task is to analyze the manuscript based on the content provided in the following structure:
+            1) Extract the research question precisely.
+            2) Assess the quality, clarity and scientific rigor of the research question in a short report (max 100 words).
+            3. Assess the methodological rigor, appropriateness and design in a short report (max 100 words).
+            4. Provide a methodology score from 0 to 10, where:
+                - 0 = completely flawed, inappropriate, or non-scientific methodology
+                - 10 = fully rigorous, appropriate, and methodologically exemplary design
+
+            Do not make assumptions beyond the supplied data.
+            Return information strictly according to the fields defined in the output schema.
+            Do not produce explanations outside the schema fields.
+            """
+        user_prompt = """
+            Here are the relevant content of the manuscript:
+
+            Content related to the research question:
+            {rq_context}
+
+            Content related to the methodology
+            {method_context}
+
+            Based on these inputs, generate your methodology assessment.
+            """
+        
         
         # 3. generate analysis with llm
-        structured_llm = llm.with_structured_output(MethodCheckResult)
+        structured_llm = llm.with_structured_output(MethodReport)
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("user", user_prompt)
+        ])
         chain = prompt | structured_llm 
         analysis = chain.invoke({
-            "rq_context": contexts["research_question"],
-            "method_context": contexts["methodology"]
+            "rq_context": context["research_question"],
+            "method_context": context["methodology"]
         })
         
         # 4. structure report

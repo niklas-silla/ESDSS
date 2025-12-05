@@ -41,13 +41,13 @@ def report_node(state: AgentState):
 # -----------
 quality_graph = StateGraph(AgentState)
 quality_graph.add_node("analyze_images", analyze_images_node)
-quality_graph.add_node("readability", readability_node)
-quality_graph.add_node("report", report_node)
+quality_graph.add_node("calculate_readability", readability_node)
+quality_graph.add_node("generate_report", report_node)
 
 quality_graph.add_edge(START, "analyze_images")
-quality_graph.add_edge("analyze_images", "readability")
-quality_graph.add_edge("readability", "report")
-quality_graph.add_edge("report", END)
+quality_graph.add_edge("analyze_images", "calculate_readability")
+quality_graph.add_edge("calculate_readability", "generate_report")
+quality_graph.add_edge("generate_report", END)
 
 sub_graph = quality_graph.compile()
 visualize_graph_png(graph = sub_graph, filename = "quality_agent_subgraph.png")
