@@ -1,9 +1,9 @@
-from typing import TypedDict, Optional
+from typing import TypedDict, Optional, List
 
 class AgentResult(TypedDict):
     status: str # "pending", "running", "success", "failed"
     data: dict
-    error: Optional[str]
+    error: List[str]
     retries: int
 
 # State schema
@@ -53,49 +53,49 @@ def create_initial_state(original_manuscript_path: str, artifacts_folder: str) -
         "preprocessing_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "format_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "innovation_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "method_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "plagiarism_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "quality_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "scopefit_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "report_agent": {
             "status": "pending",
             "data": {},
-            "error": None,
+            "error": [],
             "retries": 0
         },
         "deskreject": None,

@@ -6,6 +6,8 @@ import requests
 import feedparser
 import time
 import re
+import os
+SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
 
 class InnovationStatementResult(BaseModel):
     """Result of Innovation Statement Agent"""
@@ -59,12 +61,16 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
 def search_semantic_scholar(queries, max_results=5, max_retries=5) -> List:
     url = "https://api.semanticscholar.org/graph/v1/paper/search"
     headers = {
-        "x-api-key": "9qI5TDajbT2eKQH3mrZIZ64mkdjUx12lyVlE2fVf"
+        "x-api-key": SEMANTIC_SCHOLAR_API_KEY
     }
     results = []
     seen_ids = set()
     # request semantic scholar for each query in the queries list
     for q in queries:
+        # skip empty queries
+        if not q or not q.strip():
+            continue
+
         params = {
             "query": q,
             "limit": max_results,
@@ -95,6 +101,10 @@ def search_arxiv(queries, max_results=5, max_retries=5) -> List:
     seen_ids = set()
     # request arxiv for each query in the queries list
     for q in queries:
+        # skip empty queries
+        if not q or not q.strip():
+            continue
+
         search_query = f"search_query=all:{q}&start=0&max_results={max_results}"
         response = requests.get(base_url + search_query)
         feed = feedparser.parse(response.text)

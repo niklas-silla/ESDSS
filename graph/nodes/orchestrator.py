@@ -12,8 +12,12 @@ def orchestrator_node(state: AgentState) -> AgentState:
 
     all_finished = True
     any_failed = False
+
+    ############
+    # WORKFLOW #
+    ############
     
-    # workflow step 0: start preprocessing
+    # STEP 0: Start preprocessing
     if state["workflow_step"] == 0:
         print("🔄 preprocessing started ...")
         state["workflow_step"] += 1
@@ -21,7 +25,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
         state["next_node"] = [preprocessing_agent]
         return state
     
-    # workflow step 1: check preprocessing & decide next step
+    # STEP 1: Check preprocessing & decide next step
     if state["workflow_step"] == 1:
         # Check if preprocessing is done
         status = state[preprocessing_agent]["status"]
@@ -35,18 +39,18 @@ def orchestrator_node(state: AgentState) -> AgentState:
             state["next_node"] = criterion_agents
             return state
         elif status == "failed" and retries < 2:
-            print("🔄 preprocessing failed, retrying ...")
+            print(f"⚠️ preprocessing failed, retrying (attempt {retries + 1}/{2})...")
             state[preprocessing_agent]["retries"] += 1
             state["message"] = f"Preprocessing failed. Retrying preprocessing (Attempt {retries + 1})."
             state["next_node"] = [preprocessing_agent]
             return state
         else:
-            print("❌ preprocessing failed, retrying ...")
-            state["message"] = "Preprocessing failed after multiple attempts. Aborting workflow."
+            print("❌ preprocessing failed. STOPPED")
+            state["message"] = "Preprocessing failed after multiple attempts. Workflow stopped."
             state["next_node"] = [END]
             return state  # End workflow
     
-    # workflow step 2: check criterion agents results 
+    # STEP 2: Check criterion agents results 
     if state["workflow_step"] == 2:
         for agent in criterion_agents:
             status = state[agent]["status"]
@@ -57,24 +61,24 @@ def orchestrator_node(state: AgentState) -> AgentState:
 
             elif status == "success":
                 if agent not in state["success_logged"]:
-                    print(f"✅ {agent} completed successfully!")
+                    print(f"✅ {agent} completed successfully")
                     state["success_logged"].add(agent)
 
             elif status == "failed":
                 retries = state[agent]["retries"]
-                error = state[agent]["error"]
+                error = str(state[agent]["error"]) # List -> str 
                 
                 if retries < 2:
                     state[agent]["retries"] += 1
-                    print(f"❌ {agent} failed: {error}")
-                    print(f"🔄 Retrying {agent} (attempt {retries + 1}/{2})...")
+                    print(f"⚠️ {agent} failed, retrying (attempt {retries + 1}/{2})...")
                     
                     all_finished = False
                     state["next_node"] = [agent]
                     return state  # Retry the failed agent
 
                 else:
-                    print(f"💥 {agent} failed permanently after 2 retries!")
+                    print(f"❌ {agent} failed permanently. STOPPED")
+                    print(f"Error of {agent}: {error}")
                     any_failed = True
 
         if all_finished and not any_failed:
@@ -97,7 +101,7 @@ def orchestrator_node(state: AgentState) -> AgentState:
             state["next_node"] = ["orchestrator"]
             return state # Stay in orchestrator to check again later
         
-    # workflow step 3: finalize reporting
+    # STEP 3: Check report agent result
     if state["workflow_step"] == 3:
         # Check if reporting is done
         status = state[report_agent]["status"]
@@ -110,14 +114,14 @@ def orchestrator_node(state: AgentState) -> AgentState:
             state["next_node"] = [END]
             return state  # End workflow
         elif status == "failed" and retries < 2:
-            print("🔄 report generation failed, retrying ...")
+            print(f"⚠️ report generation failed, retrying (attempt {retries + 1}/{2})...")
             state[report_agent]["retries"] += 1
             state["message"] = f"Report generation failed. Retrying report generation (Attempt {retries + 1})."
             state["next_node"] = [report_agent]
             return state
         else:
-            print("❌ preprocessing failed, retrying ...")
-            state["message"] = "Report generation failed after multiple attempts. Aborting workflow."
+            print("❌ report generation failed permanently. STOPPED")
+            state["message"] = "Report generation failed after multiple attempts. Workflow stopped."
             state["next_node"] = [END]
             return state  # End workflow
 

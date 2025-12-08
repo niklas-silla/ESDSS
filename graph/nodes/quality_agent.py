@@ -10,10 +10,12 @@ def quality_check_node(state: AgentState) -> AgentState:
     Node to check the quality aspects of a PDF manuscript.
     """
     state[AGENT]["status"]= "running"
-
-    state = sub_graph.invoke(state)
-
-    state[AGENT]["status"]= "success"
+    try:
+        state = sub_graph.invoke(state)
+        state[AGENT]["status"]= "success"
+    except Exception as e:
+        state[AGENT]["status"]= "failed"
+        state[AGENT]["error"].append(e)
     return state[AGENT]
 
 
