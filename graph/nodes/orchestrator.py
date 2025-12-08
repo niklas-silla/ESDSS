@@ -10,8 +10,6 @@ def orchestrator_node(state: AgentState) -> AgentState:
     criterion_agents = ["format_agent", "innovation_agent", "method_agent", "plagiarism_agent", "quality_agent", "scopefit_agent"]
     report_agent = "report_agent"
 
-    all_finished = True
-    any_failed = False
 
     ############
     # WORKFLOW #
@@ -52,6 +50,8 @@ def orchestrator_node(state: AgentState) -> AgentState:
     
     # STEP 2: Check criterion agents results 
     if state["workflow_step"] == 2:
+        all_finished = True # Assumption is True -> can be set to False during iteration via agents 
+        any_failed = False # Assumption is False -> can be set to True if an agent permanently failed
         for agent in criterion_agents:
             status = state[agent]["status"]
 
@@ -60,9 +60,9 @@ def orchestrator_node(state: AgentState) -> AgentState:
                 all_finished = False
 
             elif status == "success":
-                if agent not in state["success_logged"]:
+                if agent not in state["finished_logged"]:
                     print(f"✅ {agent} completed successfully")
-                    state["success_logged"].add(agent)
+                    state["finished_logged"].add(agent)
 
             elif status == "failed":
                 retries = state[agent]["retries"]
@@ -80,8 +80,9 @@ def orchestrator_node(state: AgentState) -> AgentState:
                     print(f"❌ {agent} failed permanently. STOPPED")
                     print(f"Error of {agent}: {error}")
                     any_failed = True
+                    state["finished_logged"].add(agent)
 
-        if all_finished and not any_failed:
+        if all_finished:
             if not any_failed:
                 print("\n🎉 All worker agents completed successfully!")
                 state["message"] = "All workers completed successfully"

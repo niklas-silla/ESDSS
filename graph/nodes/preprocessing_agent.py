@@ -50,4 +50,4 @@ preprocessing_graph.add_edge("preprocessing", "run_docling")
 preprocessing_graph.add_edge("run_docling", END)
 
 sub_graph = preprocessing_graph.compile()
-visualize_graph_png(graph = sub_graph, filename = "preprocessing_subgraph.png")
+#visualize_graph_png(graph = sub_graph, filename = "preprocessing_subgraph.png")

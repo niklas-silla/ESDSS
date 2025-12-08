@@ -52,4 +52,4 @@ quality_graph.add_edge("calculate_readability", "generate_report")
 quality_graph.add_edge("generate_report", END)
 
 sub_graph = quality_graph.compile()
-visualize_graph_png(graph = sub_graph, filename = "quality_agent_subgraph.png")
+#visualize_graph_png(graph = sub_graph, filename = "quality_agent_subgraph.png")

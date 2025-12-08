@@ -48,4 +48,4 @@ method_graph.add_edge("analyze_method", "generate_report")
 method_graph.add_edge("generate_report", END)
 
 sub_graph = method_graph.compile()
-visualize_graph_png(graph = sub_graph, filename = "method_agent_subgraph.png")
+#visualize_graph_png(graph = sub_graph, filename = "method_agent_subgraph.png")

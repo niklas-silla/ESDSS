@@ -49,4 +49,4 @@ format_graph.add_edge("check_formatting", "generate_report")
 format_graph.add_edge("generate_report", END)
 
 sub_graph = format_graph.compile()
-visualize_graph_png(graph = sub_graph, filename = "format_agent_subgraph.png")
+#visualize_graph_png(graph = sub_graph, filename = "format_agent_subgraph.png")

@@ -17,7 +17,7 @@ class AgentState(TypedDict):
 
     # orchestrator
     workflow_step: int
-    success_logged: set[str]  # Tracking which Agents have already been logged
+    finished_logged: set[str]  # Tracking which Agents have already been logged
     next_node: list[str]  # To handle dynamic next nodes
 
     # agents
@@ -48,7 +48,7 @@ def create_initial_state(original_manuscript_path: str, artifacts_folder: str) -
         "artifacts_folder": artifacts_folder,
         "message": "",
         "workflow_step": 0,
-        "success_logged": set(),
+        "finished_logged": set(),
         "next_node": [],
         "preprocessing_agent": {
             "status": "pending",

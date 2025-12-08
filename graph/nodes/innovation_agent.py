@@ -55,4 +55,4 @@ innovation_graph.add_edge("search_arxiv", "generate_report")
 innovation_graph.add_edge("generate_report", END)
 
 sub_graph = innovation_graph.compile()
-visualize_graph_png(graph = sub_graph, filename = "innovation_agent_subgraph.png")
+#visualize_graph_png(graph = sub_graph, filename = "innovation_agent_subgraph.png")

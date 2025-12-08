@@ -22,14 +22,30 @@ def section_check(md_manuscript_path):
         markdown_text = f.read()
 
     # 2. build prompts with context
-    system_prompt = """
-        You are an expert in the content structure of scientific manuscripts.
+    system_prompt = """Y
+        You are an expert in analyzing the structure of scientific manuscripts.
 
-        Your task is to analyze a given manuscript and determine whether required sections of a scientific paper are present. 
-        Consider variations in wording, numbering styles, subheadings, and Markdown heading levels. 
+        Your task is to determine whether required scientific sections are present.
+        A section is considered "present" if:
+        - It appears as a heading, even under a different but semantically equivalent name,
+        - OR it is merged with another section (e.g., "Results and Discussion"),
+        - OR its content clearly occurs under another heading.
+
+        A section is NOT present if:
+        - It only appears as a brief mention,
+        - Its presence is unclear or ambiguous.
+
+        Typical variants:
+        - Introduction → Background, Problem Statement
+        - Methods → Methodology, Materials and Methods, Experimental Setup
+        - Results → Findings, Outcomes
+        - Discussion → Analysis, Interpretation
+        - Conclusion → Summary, Closing Remarks
+        - References → Bibliography, Works Cited, Literature
         
         Use only the content of the provided manuscript.
-        Return information strictly according to the fields defined in the output schema.
+        If the presence of a section is ambiguous or uncertain, return false.
+        Return ONLY the fields defined in the schema.
         Do not produce explanations outside the schema fields.
         """
     user_prompt = """
@@ -41,8 +57,9 @@ def section_check(md_manuscript_path):
         - Conclusion
         - References
 
-        Return for each section, whether it is present or not (true or false).
-        The field `section_report` should contain a concise summary of max. 50 words.
+        Use semantic equivalence and merged-section detection.
+        Return true/false for each section, whether it is present or not.
+        The section_report must summarize in max. 50 words, which sections are missing or merged.
 
         Manuscript:
         {manuscript_md}

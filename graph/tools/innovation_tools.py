@@ -37,10 +37,13 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
             Do not produce explanations outside the schema fields.
             """
         user_prompt = """
-            Analyze the manuscript in the following structure:
+            Analyze the following manuscript using the following structure:
             1) Extract the core innovation of the manuscript.
-            2) Generate 2 short search queries consisting of max. 6 keywords.
-            The search queries should collectively cover the innovation statement of the manuscript.
+            2) Based on the core innovation statement generate 2 short search queries consisting of max. 6 keywords.
+            These keywords should be used to search for similar papers in scientific paper databases.
+
+            MANUSCRIPT:
+            {markdown_text}
             """
         
         

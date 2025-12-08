@@ -23,10 +23,10 @@ def analyze_images(image_paths: list) -> str:
         values.append({"image": img.name, "sharpness": sharpness})
 
         if sharpness > treshold:
-            results += f"✅ {img.name} is sharp\n"
+            results += f"{img.name} is sharp\n"
             count_sharp += 1
         else:
-            results += f"❌ {img.name} is blurry\n"
+            results += f"{img.name} is blurry\n"
             count_blurry += 1
     
     results += f"\nSummary: {count_sharp} sharp images and {count_blurry} blurry images.\n"
@@ -95,8 +95,8 @@ def generate_quality_report(image_quality: str, readability_scores: dict) -> dic
         You must provide:
         1) A concise quality report (maximum 200 words)  
         2) A quality score from 0 to 10, where:
-            - 0 = poor image quality; readability scores are not appropriate for a scientific paper  
-            - 10 = excellent image quality; readability scores are appropriate for a scientific paper
+            - 0 = poor image quality; readability scores are low and therefore not appropriate for a scientific paper  
+            - 10 = excellent image quality; readability scores are high and therefore appropriate for a scientific paper
 
         Do not make assumptions beyond the supplied data.
         Return information strictly according to the fields defined in the output schema.

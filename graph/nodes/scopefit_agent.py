@@ -55,4 +55,4 @@ scopefit_graph.add_edge("calculate_cosine_similarity", "generate_report")
 scopefit_graph.add_edge("generate_report", END)
 
 sub_graph = scopefit_graph.compile()
-visualize_graph_png(graph = sub_graph, filename = "scopefit_agent_subgraph.png")
+#visualize_graph_png(graph = sub_graph, filename = "scopefit_agent_subgraph.png")
