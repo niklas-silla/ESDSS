@@ -101,6 +101,7 @@ def generate_quality_report(image_quality: str, readability_scores: dict) -> dic
         Do not make assumptions beyond the supplied data.
         Return information strictly according to the fields defined in the output schema.
         Do not produce explanations outside the schema fields.
+        Always answer in English!
         """
     user_prompt = """
         Here are the analysis results:
@@ -115,7 +116,7 @@ def generate_quality_report(image_quality: str, readability_scores: dict) -> dic
         """
 
     # Invoke LLM
-    structured_llm = get_llm().with_structured_output(QualityReport)
+    structured_llm = get_llm().with_structured_output(QualityReport, include_raw=True)
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("user", user_prompt)
@@ -125,4 +126,8 @@ def generate_quality_report(image_quality: str, readability_scores: dict) -> dic
         "readability_scores": readability_scores,
         "image_quality": image_quality
     })
-    return response.model_dump()
+    # process raw data
+    result = response["parsed"].model_dump()
+    input_tokens = response["raw"].usage_metadata["input_tokens"]
+    output_tokens = response["raw"].usage_metadata["output_tokens"]
+    return result, input_tokens, output_tokens

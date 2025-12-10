@@ -112,6 +112,8 @@ def orchestrator_node(state: AgentState) -> AgentState:
             print("✅ report generated successfully.")
             state["workflow_step"] += 1
             state["message"] = "Report successfully generated. Workflow completed."
+            # set workflow as success
+            state["workflow_success"] = True
             state["next_node"] = [END]
             return state  # End workflow
         elif status == "failed" and retries < 2:

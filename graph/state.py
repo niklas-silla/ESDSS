@@ -5,6 +5,9 @@ class AgentResult(TypedDict):
     data: dict
     error: List[str]
     retries: int
+    duration: float
+    input_tokens: int
+    output_tokens: int
 
 # State schema
 class AgentState(TypedDict):
@@ -14,6 +17,8 @@ class AgentState(TypedDict):
     images: list[str]
     artifacts_folder: str
     message: str
+    total_duration: float
+    workflow_success: bool
 
     # orchestrator
     workflow_step: int
@@ -47,57 +52,86 @@ def create_initial_state(original_manuscript_path: str, artifacts_folder: str) -
         "images": [],
         "artifacts_folder": artifacts_folder,
         "message": "",
+        "total_duration": 0,
+        "workflow_success": False,
+
         "workflow_step": 0,
         "finished_logged": set(),
         "next_node": [],
+        
         "preprocessing_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "format_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "innovation_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "method_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "plagiarism_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "quality_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "scopefit_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
         "report_agent": {
             "status": "pending",
             "data": {},
             "error": [],
-            "retries": 0
+            "retries": 0,
+            "duration": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
         },
+
         "deskreject": None,
         "final_report": None,
     }

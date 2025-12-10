@@ -133,6 +133,7 @@ def generate_scopefit_report(manuscript_data: dict, neighbor_info: str, title_cs
         Do not make assumptions beyond the supplied data.
         Return information strictly according to the fields defined in the output schema.
         Do not produce explanations outside the schema fields.
+        Always answer in English!
         """
                             
 
@@ -159,7 +160,7 @@ def generate_scopefit_report(manuscript_data: dict, neighbor_info: str, title_cs
         """
 
     # Invoke LLM
-    structured_llm = get_llm().with_structured_output(ScopefitReport)
+    structured_llm = get_llm().with_structured_output(ScopefitReport, include_raw=True)
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -173,6 +174,8 @@ def generate_scopefit_report(manuscript_data: dict, neighbor_info: str, title_cs
         "abstract_cs_median": abstract_cs_median,
         "aim_scope_em": aim_scope_em
     })
-    return response.model_dump()
-    
-    
+    # process raw data
+    result = response["parsed"].model_dump()
+    input_tokens = response["raw"].usage_metadata["input_tokens"]
+    output_tokens = response["raw"].usage_metadata["output_tokens"]
+    return result, input_tokens, output_tokens

@@ -12,7 +12,7 @@ SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
 class InnovationStatementResult(BaseModel):
     """Result of Innovation Statement Agent"""
     innovation_statement: str = Field(description="Identified core innovation statement of the manuscript.")
-    search_queries: List[str] = Field(description="List of search queries.")
+    search_queries: List[str] = Field(description="List of 2 search queries.")
 
 def extract_innovation_statement(manuscript_md_path) -> dict:
         """extract innovation statement from the text"""
@@ -30,11 +30,12 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
             You are an expert in extracting the core innovation of a scientific manuscript.
             Your task is: 
             1) to extract the core innovation of a scientific manuscript and 
-            2) to generate high-quality search queries that can be used to search for the innovation in the web.
+            2) to generate 2 high-quality search queries that can be used to search for the innovation in the web.
 
             Use only the content of the provided manuscript.
             Return information strictly according to the fields defined in the output schema.
             Do not produce explanations outside the schema fields.
+            Always answer in English!
             """
         user_prompt = """
             Analyze the following manuscript using the following structure:
@@ -48,7 +49,7 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
         
         
         # 4. invoke structured output llm 
-        structured_llm = get_llm().with_structured_output(InnovationStatementResult)
+        structured_llm = get_llm().with_structured_output(InnovationStatementResult, include_raw=True)
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             ("user", user_prompt)
@@ -57,8 +58,11 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
         analysis = chain.invoke({
             "markdown_text": markdown_text
         })
-        
-        return analysis.model_dump() # convert Pydantic -> dict
+        # process raw data
+        result = analysis["parsed"].model_dump() # convert Pydantic -> dict
+        input_tokens = analysis["raw"].usage_metadata["input_tokens"]
+        output_tokens = analysis["raw"].usage_metadata["output_tokens"]
+        return result, input_tokens, output_tokens
 
 
 def search_semantic_scholar(queries, max_results=5, max_retries=5) -> List:
@@ -142,6 +146,7 @@ def innovation_report_agent(innovation_statement, web_results_semschol, web_resu
         Do not make assumptions beyond the supplied data.
         Return information strictly according to the fields defined in the output schema.
         Do not produce explanations outside the schema fields.
+        Always answer in English!
         """
     user_prompt = """
         Here are the analysis results:
@@ -160,7 +165,7 @@ def innovation_report_agent(innovation_statement, web_results_semschol, web_resu
     websearch_results = "\n".join([f"{r.get('title')}: {r.get('abstract','')}" for r in websearch_results])
     
     # 3. Invoke LLM and generate report
-    llm = get_llm().with_structured_output(InnovationReport)
+    llm = get_llm().with_structured_output(InnovationReport, include_raw=True)
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("user", user_prompt)
@@ -170,5 +175,8 @@ def innovation_report_agent(innovation_statement, web_results_semschol, web_resu
         "core_innovation": innovation_statement,
         "websearch_results": websearch_results
     })
-    
-    return response.model_dump() # convert Pydantic -> dict
+    # process raw data
+    result = response["parsed"].model_dump() # convert Pydantic -> dict
+    input_tokens = response["raw"].usage_metadata["input_tokens"]
+    output_tokens = response["raw"].usage_metadata["output_tokens"]
+    return result, input_tokens, output_tokens

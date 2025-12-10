@@ -92,6 +92,7 @@ def method_report_agent(context):
             Do not make assumptions beyond the supplied data.
             Return information strictly according to the fields defined in the output schema.
             Do not produce explanations outside the schema fields.
+            Always answer in English!
             """
         user_prompt = """
             Here are the relevant content of the manuscript:
@@ -107,7 +108,7 @@ def method_report_agent(context):
         
         
         # 3. generate analysis with llm
-        structured_llm = llm.with_structured_output(MethodReport)
+        structured_llm = llm.with_structured_output(MethodReport, include_raw=True)
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             ("user", user_prompt)
@@ -118,10 +119,15 @@ def method_report_agent(context):
             "method_context": context["methodology"]
         })
         
+        # process raw data
+        result = analysis["parsed"]
+        input_tokens = analysis["raw"].usage_metadata["input_tokens"]
+        output_tokens = analysis["raw"].usage_metadata["output_tokens"]
+
         # 4. structure report
         report = {
-             "researchquestion": analysis.research_question,
-             "report": analysis.rq_report + "\n" + analysis.methodology_report,
-             "score": analysis.score
+             "researchquestion": result.research_question,
+             "report": result.rq_report + "\n" + result.methodology_report,
+             "score": result.score
         }
-        return report
+        return report, input_tokens, output_tokens

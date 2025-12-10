@@ -2,6 +2,7 @@ from graph.state import AgentState
 from graph.visualizer import visualize_graph_png
 from graph.tools.scopefit_tools import extract_manuscript_data, calculate_cosine_similarity, generate_scopefit_report
 from langgraph.graph import StateGraph, START, END
+import time
 
 AGENT = "scopefit_agent"
 
@@ -11,7 +12,10 @@ def scope_fit_node(state: AgentState) -> AgentState:
     """
     state[AGENT]["status"]= "running"
     try:
+        start_sub_graph = time.perf_counter()
         state = sub_graph.invoke(state)
+        end_sub_graph = time.perf_counter()
+        state[AGENT]["duration"] = end_sub_graph - start_sub_graph
         state[AGENT]["status"]= "success"
     except Exception as e:
         state[AGENT]["status"]= "failed"
@@ -32,13 +36,15 @@ def cosine_similarity_calculator_node(state: AgentState):
     return state
 
 def report_node(state: AgentState):
-    report = generate_scopefit_report(
+    report, input_tokens, output_tokens = generate_scopefit_report(
         state[AGENT]["data"]["manuscript_data"],
         state[AGENT]["data"]["neighbor_info"],
         state[AGENT]["data"]["title_cs_median"],
         state[AGENT]["data"]["abstract_cs_median"]
     )
     state[AGENT]["data"].update(report)
+    state[AGENT]["input_tokens"] = input_tokens
+    state[AGENT]["output_tokens"] = output_tokens
     return state
 
 # -----------

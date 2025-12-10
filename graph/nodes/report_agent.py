@@ -2,6 +2,7 @@ from graph.state import AgentState
 from llm_config import get_llm
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
+import time
 
 AGENT = "report_agent"
 
@@ -14,14 +15,15 @@ def report_generator_node(state: AgentState) -> AgentState:
     """
     Node to generate a report from all the agent analysis of a PDF manuscript.
     """
+    start_node = time.perf_counter()
     try:
         state[AGENT]["status"]= "running"
     
-        format_agent_report = state["format_agent"]["data"]["report"] + "\nScore: " + str(state["format_agent"]["data"]["score"])
-        innovation_agent_report = state["innovation_agent"]["data"]["report"] + "\nScore: " + str(state["innovation_agent"]["data"]["score"])
-        method_agent_report = state["method_agent"]["data"]["report"] + "\nScore: " + str(state["method_agent"]["data"]["score"])
-        scopefit_agent_report = state["scopefit_agent"]["data"]["report"] + "\nScore: " + str(state["scopefit_agent"]["data"]["score"])
-        quality_agent_report = state["quality_agent"]["data"]["report"] + "\nScore: " + str(state["quality_agent"]["data"]["score"])
+        format_agent_report = state["format_agent"]["data"].get("report", "")
+        innovation_agent_report = state["innovation_agent"]["data"].get("report", "")
+        method_agent_report = state["method_agent"]["data"].get("report", "")
+        scopefit_agent_report = state["scopefit_agent"]["data"].get("report", "")
+        quality_agent_report = state["quality_agent"]["data"].get("report", "")
 
         # Build system and user prompt 
         system_prompt = """
@@ -33,8 +35,6 @@ def report_generator_node(state: AgentState) -> AgentState:
         1. Scopefit Report = Highest priority. Out-of-scope issues can alone justify a Desk Reject.
         2. Innovation + Method Reports = High priority. Major weaknesses heavily influence the final decision.
         3. Quality + Format Reports = Medium priority. Important but rarely decisive if scope, innovation, and methods are strong. Minor issues should not drive a Desk Reject decision.
-
-        Use scores only as qualitative signals, not mathematical operations.
 
         TASK:
         - Synthesize the five reports into a unified summary (max. ~10–12 sentences).
@@ -67,7 +67,7 @@ def report_generator_node(state: AgentState) -> AgentState:
             ("system", system_prompt),
             ("user", user_prompt)
         ])
-        structured_llm = get_llm().with_structured_output(FinalReport)
+        structured_llm = get_llm().with_structured_output(FinalReport, include_raw=True)
         chain = prompt | structured_llm
 
         response = chain.invoke({
@@ -78,7 +78,11 @@ def report_generator_node(state: AgentState) -> AgentState:
             "quality_agent_report": quality_agent_report,
         })
 
-        state.update(response.model_dump())
+        state.update(response["parsed"].model_dump()) # model_dump: Pydantic BaseModel -> dict
+        state[AGENT]["input_tokens"] = response["raw"].usage_metadata["input_tokens"]
+        state[AGENT]["output_tokens"] = response["raw"].usage_metadata["output_tokens"]
+        end_node = time.perf_counter()
+        state[AGENT]["duration"] = end_node - start_node
         state[AGENT]["status"]= "success"
         
     except Exception as e:

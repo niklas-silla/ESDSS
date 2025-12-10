@@ -2,6 +2,7 @@ from graph.state import AgentState
 from graph.visualizer import visualize_graph_png
 from graph.tools.method_tools import create_vectorstore, method_analysis, method_report_agent
 from langgraph.graph import StateGraph, START, END
+import time
 
 AGENT = "method_agent"
 
@@ -11,7 +12,10 @@ def method_check_node(state: AgentState) -> AgentState:
     """
     state[AGENT]["status"]= "running"
     try:
+        start_sub_graph = time.perf_counter()
         state = sub_graph.invoke(state)
+        end_sub_graph = time.perf_counter()
+        state[AGENT]["duration"] = end_sub_graph - start_sub_graph
         state[AGENT]["status"]= "success"
     except Exception as e:
         state[AGENT]["status"]= "failed"
@@ -30,8 +34,10 @@ def analyze_method_node(state: AgentState):
     state[AGENT]["data"]["context"] = method_analysis(state[AGENT]["data"]["vectorstore"])
 
 def method_report_node(state: AgentState):
-    report = method_report_agent(state[AGENT]["data"]["context"])
+    report, input_tokens, output_tokens = method_report_agent(state[AGENT]["data"]["context"])
     state[AGENT]["data"].update(report)
+    state[AGENT]["input_tokens"] = input_tokens
+    state[AGENT]["output_tokens"] = output_tokens
     return state
 
 # -----------

@@ -3,7 +3,7 @@ from graph.visualizer import visualize_graph_png
 from graph.tools.preprocessing_tools import preprocessing, docling_converter
 from langgraph.graph import StateGraph, START, END
 from pathlib import Path
-import fitz  # PyMuPDF library for PDF processing
+import time
 
 
 AGENT = "preprocessing_agent"
@@ -14,7 +14,10 @@ def manuscript_preprocessing_node(state: AgentState) -> AgentState:
     """
     state[AGENT]["status"]= "running"
     try:
+        start_sub_graph = time.perf_counter()
         state = sub_graph.invoke(state)
+        end_sub_graph = time.perf_counter()
+        state[AGENT]["duration"] = end_sub_graph - start_sub_graph
         state[AGENT]["status"]= "success"
     except Exception as e:
         state[AGENT]["status"]= "failed"

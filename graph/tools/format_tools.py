@@ -17,39 +17,22 @@ class SectionCheckResult(BaseModel):
     section_report: str = Field(description="Short section report of max 50 words")
 
 def section_check(md_manuscript_path):
-    # 1. open markdown file
+    # 1. open markdown file and extract headings
+    headings = []
     with open(md_manuscript_path, "r", encoding="utf-8") as f:
-        markdown_text = f.read()
+        lines = f.readlines()
+    for line in lines:
+        # Matcht "# Heading", "## Heading", "### Heading"
+        match = re.match(r"^(#{1,3})\s+(.*)", line)
+        if match:
+            title = match.group(2).strip()
+            headings.append(title)
 
     # 2. build prompts with context
-    system_prompt = """Y
+    system_prompt = """
         You are an expert in analyzing the structure of scientific manuscripts.
 
-        Your task is to determine whether required scientific sections are present.
-        A section is considered "present" if:
-        - It appears as a heading, even under a different but semantically equivalent name,
-        - OR it is merged with another section (e.g., "Results and Discussion"),
-        - OR its content clearly occurs under another heading.
-
-        A section is NOT present if:
-        - It only appears as a brief mention,
-        - Its presence is unclear or ambiguous.
-
-        Typical variants:
-        - Introduction → Background, Problem Statement
-        - Methods → Methodology, Materials and Methods, Experimental Setup
-        - Results → Findings, Outcomes
-        - Discussion → Analysis, Interpretation
-        - Conclusion → Summary, Closing Remarks
-        - References → Bibliography, Works Cited, Literature
-        
-        Use only the content of the provided manuscript.
-        If the presence of a section is ambiguous or uncertain, return false.
-        Return ONLY the fields defined in the schema.
-        Do not produce explanations outside the schema fields.
-        """
-    user_prompt = """
-        Analyze the following manuscript and check whether the following scientific sections are present:
+        Your task is to determine whether the following sections are present in the manuscript based solely on the list of provided headings:
         - Introduction
         - Methods
         - Results
@@ -57,25 +40,46 @@ def section_check(md_manuscript_path):
         - Conclusion
         - References
 
-        Use semantic equivalence and merged-section detection.
-        Return true/false for each section, whether it is present or not.
-        The section_report must summarize in max. 50 words, which sections are missing or merged.
+        A section counts as present if:
+        - A semantically equivalent heading exists,
+        - OR it appears merged with another heading,
+        - OR a combined heading clearly implies inclusion of the section.
 
-        Manuscript:
-        {manuscript_md}
+        Common variants:
+        - Introduction → Background, Problem Statement
+        - Methods → Methodology, Materials and Methods, Experimental Setup
+        - Results → Findings, Outcomes
+        - Discussion → Analysis, Interpretation
+        - Conclusion → Summary, Closing Remarks
+        - References → Bibliography, Works Cited, Literature
+        
+        Use only the content of the provided headings.
+        If uncertain, return false.
+        Return ONLY the fields defined in the schema.
+        Always answer in English!
+        """
+    user_prompt = """
+        Following the list of headings to check:
+        {headings}
+        Return true/false for each section, indicating whether it is present or not.
+        The section_report must summarize in max. 50 words which sections are present, missing, or under a semantically equivalent heading.
         """
     
     # 3. invoke llm
-    structured_llm = get_llm().with_structured_output(SectionCheckResult)
+    structured_llm = get_llm().with_structured_output(SectionCheckResult, include_raw=True)
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("user", user_prompt)
     ])
     chain = prompt | structured_llm
     analysis = chain.invoke({
-        "manuscript_md": markdown_text
+        "headings": headings
     })
-    return analysis.model_dump() # return dict
+    # process raw data
+    result = analysis["parsed"].model_dump()
+    input_tokens = analysis["raw"].usage_metadata["input_tokens"]
+    output_tokens = analysis["raw"].usage_metadata["output_tokens"]
+    return result, input_tokens, output_tokens
     
 
 def formatting_check(preprocessed_manuscript_path, md_path):
@@ -204,6 +208,7 @@ def format_report_agent(formatting_results, presence_required_sections):
         Do not make assumptions beyond the supplied data.
         Return information strictly according to the fields defined in the output schema.
         Do not produce explanations outside the schema fields.
+        Always answer in English!
         """
     user_prompt = """
         Here are the analysis results:
@@ -218,7 +223,7 @@ def format_report_agent(formatting_results, presence_required_sections):
         """
     
     # Invoke LLM
-    structured_llm = get_llm().with_structured_output(FormatReport)
+    structured_llm = get_llm().with_structured_output(FormatReport, include_raw=True)
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("user", user_prompt)
@@ -228,4 +233,8 @@ def format_report_agent(formatting_results, presence_required_sections):
         "presence_required_sections": presence_required_sections,
         "formatting_results": formatting_results
     })
-    return response.model_dump()
+    # process raw data
+    result = response["parsed"].model_dump()
+    input_tokens = response["raw"].usage_metadata["input_tokens"]
+    output_tokens = response["raw"].usage_metadata["output_tokens"]
+    return result, input_tokens, output_tokens
