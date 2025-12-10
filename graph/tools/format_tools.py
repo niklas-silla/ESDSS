@@ -33,17 +33,13 @@ def section_check(md_manuscript_path):
         You are an expert in analyzing the structure of scientific manuscripts.
 
         Your task is to determine whether the following sections are present in the manuscript based solely on the list of provided headings:
-        - Introduction
-        - Methods
-        - Results
-        - Discussion
-        - Conclusion
-        - References
+        Introduction, Methods, Results, Discussion, Conclusion, References
 
         A section counts as present if:
         - A semantically equivalent heading exists,
         - OR it appears merged with another heading,
         - OR a combined heading clearly implies inclusion of the section.
+        Otherwise, the section counts as NOT present.
 
         Common variants:
         - Introduction → Background, Problem Statement
@@ -53,9 +49,9 @@ def section_check(md_manuscript_path):
         - Conclusion → Summary, Closing Remarks
         - References → Bibliography, Works Cited, Literature
         
-        Use only the content of the provided headings.
-        If uncertain, return false.
-        Return ONLY the fields defined in the schema.
+        Use only the provided headings.
+        Return information strictly according to the fields defined in the output schema.
+        Do not produce explanations outside the schema fields.
         Always answer in English!
         """
     user_prompt = """

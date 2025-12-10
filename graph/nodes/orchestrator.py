@@ -56,12 +56,12 @@ def orchestrator_node(state: AgentState) -> AgentState:
             status = state[agent]["status"]
 
             if status == "running":
-                print(f"⏳ {agent} is still running...")
+                print(f"    ⏳ {agent} is still running...")
                 all_finished = False
 
             elif status == "success":
                 if agent not in state["finished_logged"]:
-                    print(f"✅ {agent} completed successfully")
+                    print(f"    ☑️ {agent} completed successfully")
                     state["finished_logged"].add(agent)
 
             elif status == "failed":
@@ -70,21 +70,21 @@ def orchestrator_node(state: AgentState) -> AgentState:
                 
                 if retries < 2:
                     state[agent]["retries"] += 1
-                    print(f"⚠️ {agent} failed, retrying (attempt {retries + 1}/{2})...")
+                    print(f"    ⚠️ {agent} failed, retrying (attempt {retries + 1}/{2})...")
                     
                     all_finished = False
                     state["next_node"] = [agent]
                     return state  # Retry the failed agent
 
                 else:
-                    print(f"❌ {agent} failed permanently. STOPPED")
+                    print(f"    ❌ {agent} failed permanently. STOPPED")
                     print(f"Error of {agent}: {error}")
                     any_failed = True
                     state["finished_logged"].add(agent)
 
         if all_finished:
             if not any_failed:
-                print("\n🎉 All worker agents completed successfully!")
+                print("✅ All worker agents completed successfully!")
                 state["message"] = "All workers completed successfully"
             else:
                 print("\n⚠️ Some agents failed permanently. Workflow continues to reporting.")

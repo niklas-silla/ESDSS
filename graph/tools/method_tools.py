@@ -71,7 +71,7 @@ def method_analysis(vectorstore) -> dict:
         # retrieve all relevant sections for each query
         context = {}
         for key, query in retrieval_queries.items():
-            sections = vectorstore.similarity_search(query, k=10)
+            sections = vectorstore.similarity_search(query, k=15)
             context[key] = "\n\n".join(sec.page_content for sec in sections)
         
         return context

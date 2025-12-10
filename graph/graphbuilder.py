@@ -14,7 +14,6 @@ def build_graph():
     """
     Build the graph of the Editorial Screening Decision Support System (ESDSS) according to the designed architecture.
     """
-    print("🔄 build graph")
     graph = StateGraph(AgentState)
 
     # nodes
@@ -59,5 +58,4 @@ def build_graph():
     # compile graph
     app = graph.compile()
 
-    print("✅ graph created")
     return app

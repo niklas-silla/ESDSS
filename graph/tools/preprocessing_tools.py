@@ -20,7 +20,6 @@ def preprocessing(manuscript_path: Path, output_path: Path):
     doc = remove_linenumbers_and_headers(doc)
     doc.save(preprocessed_pdf_path)
     doc.close()
-    print(f"💾 preprocessed_manuscript.pdf saved.")
 
     return str(preprocessed_pdf_path)
 
@@ -120,7 +119,6 @@ def docling_converter(input_path: Path, output_path: Path) -> tuple[str, int, in
     
     with (output_path / "manuscript.md").open("w") as f: 
         f.write(md_document)
-    print(f"💾 manuscript.md saved.")
 
     # 5. Save images of figures and tables
     table_counter = 0

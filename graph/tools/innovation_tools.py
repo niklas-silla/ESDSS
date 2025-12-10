@@ -11,7 +11,7 @@ SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
 
 class InnovationStatementResult(BaseModel):
     """Result of Innovation Statement Agent"""
-    innovation_statement: str = Field(description="Identified core innovation statement of the manuscript.")
+    innovation_statement: str = Field(description="Innovation statement of the manuscript.")
     search_queries: List[str] = Field(description="List of 2 search queries.")
 
 def extract_innovation_statement(manuscript_md_path) -> dict:
@@ -21,30 +21,31 @@ def extract_innovation_statement(manuscript_md_path) -> dict:
         with open(manuscript_md_path, "r", encoding="utf-8") as f:
             markdown_text = f.read()
 
-        # 2. cut off all from reference section and remove image tags
-        markdown_text = re.split(r'##\s*References\s*List', markdown_text, flags=re.IGNORECASE)[0]
+        # 2. cut off all before Abstract, remove image tags and use only the first half of the manuscript (otherwise to much content -> Hallucination)
+        markdown_text = re.split(r'##\s*\d*\s*\.?\s*Abstract', markdown_text, flags=re.IGNORECASE)[-1] # -1 -> everything after
+        tokens = markdown_text.split() 
+        half_index = len(tokens) // 2
+        markdown_text = " ".join(tokens[:half_index])
         markdown_text = re.sub(r'<!-- image -->\n?', '', markdown_text)
 
         # 3. build prompt with context
         system_prompt = """
-            You are an expert in extracting the core innovation of a scientific manuscript.
-            Your task is: 
-            1) to extract the core innovation of a scientific manuscript and 
-            2) to generate 2 high-quality search queries that can be used to search for the innovation in the web.
+            You are an expert scientific analysis agent.
+            Your task is to: 
+            1) extract the core innovation of a scientific manuscript and
+            2) generate 2 high-quality search queries that can be used to assess the novelty of that innovation. (max. 6 keywords)
 
-            Use only the content of the provided manuscript.
-            Return information strictly according to the fields defined in the output schema.
-            Do not produce explanations outside the schema fields.
+            Use only the content of the provided manuscript!
+            Return information strictly according to the output schema.
             Always answer in English!
             """
         user_prompt = """
-            Analyze the following manuscript using the following structure:
-            1) Extract the core innovation of the manuscript.
-            2) Based on the core innovation statement generate 2 short search queries consisting of max. 6 keywords.
-            These keywords should be used to search for similar papers in scientific paper databases.
-
             MANUSCRIPT:
             {markdown_text}
+
+            Analyze the manuscript in the following structure:
+            1. Extract the core innovation of the manuscript.
+            2. Generate 2 short search queries to search for the presented innovation in the web.
             """
         
         

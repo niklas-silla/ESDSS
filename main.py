@@ -75,7 +75,6 @@ def process_single_manuscript(args):
         # prepare CSV-row
         csv_row = prepare_csv_row(m_id, result_state)
 
-        print(f"=== WORKFLOW {index} FINISHED ===")
         return {"status": "success", "m_id": m_id, "csv_row": csv_row}
     
     except Exception as e:
@@ -144,20 +143,24 @@ def main():
             result = future.result()
             m_id = result["m_id"]
             if result["status"] == "success":
-                csv_row = result["csv_row"]
+                print(f"=== 🎉 WORKFLOW {index} FINISHED ===")
                 
                 # Write in CSV (thread-safe through sequential writing)
+                csv_row = result["csv_row"]
                 save_row_in_csv(CSV_FILE, csv_row)
                 
                 # mark as processed
                 processed.add(m_id)
 
             else:
+                print(f"=== 💥 WORKFLOW {index} STOPPED ===")
                 error = result["error"]
+                print(f"Error at {m_id}: {error}")
+
                 # markt as failed
                 failed.add(f"{m_id}: {error}")
-                print(f"💥 Error at {m_id}: {error}")
-            
+                
+
             # write in progress file
             with open(PROGRESS_FILE, 'w') as f:
                     json.dump({'processed': list(processed), 'failed': list(failed)}, f, indent=2) # indent for better readability
