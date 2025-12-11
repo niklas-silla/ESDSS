@@ -42,14 +42,12 @@ def cut_off_cover_pages(doc: fitz.Document) -> fitz.Document:
 
     # 3. determine the index to keep from
     if start_blindedmanuscript_index is None:
-        print("No page with 'Blinded Manuscript' found.")
-        return doc # return original file if no 'Blinded Manuscript' found
-    elif last_titlepage_index is None:
-        print("No page with 'Title Page' found.")
-        return doc # return original file if no 'Title Page' found
-    elif last_titlepage_index + 1 != start_blindedmanuscript_index:
-        print(f"Can't determine cut-off point reliably. Last 'Title Page' at index {last_titlepage_index}, 'Blinded Manuscript' at index {start_blindedmanuscript_index}.")
-        return doc # return original file if cut-off point is unclear
+        if last_titlepage_index is None:
+            print("No page with 'Blinded Manuscript' or 'Title Page' found.")
+            return doc # return original file if neither 'Blinded Manuscript' nor 'Title Page' found
+        else:
+            start_blindedmanuscript_index = last_titlepage_index +1 # blindedmanuscript will start after title page
+
 
     # 4. delete pages before "Blinded Manuscript"
     if start_blindedmanuscript_index > 0:
@@ -88,7 +86,7 @@ def docling_converter(input_path: Path, output_path: Path) -> tuple[str, int, in
                                           do_table_structure=True)
     pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE  # use more accurate TableFormer model
     pipeline_options.do_code_enrichment = True # enable code enrichment
-    pipeline_options.do_formula_enrichment = True # enable formula enrichment
+    #pipeline_options.do_formula_enrichment = True # enable formula enrichment
 
     pipeline_options.generate_picture_images = True
     pipeline_options.generate_page_images = True
@@ -110,7 +108,6 @@ def docling_converter(input_path: Path, output_path: Path) -> tuple[str, int, in
 
     # 3. Convert the document
     docling_doc = converter.convert(input_path).document
-
     # 4. Export md manuscript
     md_document = docling_doc.export_to_markdown()
 

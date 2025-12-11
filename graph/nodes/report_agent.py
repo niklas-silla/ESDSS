@@ -87,6 +87,6 @@ def report_generator_node(state: AgentState) -> AgentState:
         
     except Exception as e:
         state[AGENT]["status"]= "failed"
-        state[AGENT]["error"].append(e)
+        state[AGENT]["error"].append(str(e)) # str() otherwise not JSON serializable
     
     return state

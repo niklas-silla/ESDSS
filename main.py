@@ -75,9 +75,12 @@ def process_single_manuscript(args):
         # prepare CSV-row
         csv_row = prepare_csv_row(m_id, result_state)
 
+        print(f"=== 🎉 WORKFLOW {index} FINISHED ===")
         return {"status": "success", "m_id": m_id, "csv_row": csv_row}
     
     except Exception as e:
+        print(f"=== 💥 WORKFLOW {index} STOPPED ===")
+        print(f"Error at {m_id}: {e}")
         return {"status": "error", "m_id": m_id, "error": str(e)}
 
 
@@ -143,8 +146,6 @@ def main():
             result = future.result()
             m_id = result["m_id"]
             if result["status"] == "success":
-                print(f"=== 🎉 WORKFLOW {index} FINISHED ===")
-                
                 # Write in CSV (thread-safe through sequential writing)
                 csv_row = result["csv_row"]
                 save_row_in_csv(CSV_FILE, csv_row)
@@ -153,12 +154,8 @@ def main():
                 processed.add(m_id)
 
             else:
-                print(f"=== 💥 WORKFLOW {index} STOPPED ===")
-                error = result["error"]
-                print(f"Error at {m_id}: {error}")
-
                 # markt as failed
-                failed.add(f"{m_id}: {error}")
+                failed.add(f"{m_id}: {result["error"]}")
                 
 
             # write in progress file

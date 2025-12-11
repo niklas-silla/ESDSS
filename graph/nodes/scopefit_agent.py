@@ -19,7 +19,7 @@ def scope_fit_node(state: AgentState) -> AgentState:
         state[AGENT]["status"]= "success"
     except Exception as e:
         state[AGENT]["status"]= "failed"
-        state[AGENT]["error"].append(e)
+        state[AGENT]["error"].append(str(e)) # str() otherwise not JSON serializable
     return state[AGENT]
 
 
