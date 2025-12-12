@@ -13,7 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 
 
 # === LLM PROVIDER ===
-ACTIVE_PROVIDER: Literal["ollama", "openai"] = "ollama"
+ACTIVE_PROVIDER: Literal["ollama", "openai"] = "openai" # switch provider
 
 # === MODEL-TYPE ===
 ACTIVE_MODE: Literal["simple", "reasoning"] = "simple"
@@ -31,8 +31,8 @@ OLLAMA_MODELS = {
 
 # --- OpenAI Modelle ---
 OPENAI_MODELS = {
-    "simple": "gpt-4o-mini",
-    "reasoning": "gpt-4o",
+    "simple": "gpt-5-mini",
+    "reasoning": "gpt-5-mini",
     "embedding": "text-embedding-3-large"
 }
 
@@ -74,4 +74,4 @@ def get_embedding():
 
     elif ACTIVE_PROVIDER == "openai":
         model = OPENAI_MODELS["embedding"]
-        return OpenAIEmbeddings
+        return OpenAIEmbeddings(model=model)

@@ -11,7 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 embeddings = get_embedding()
 current_dir = Path(__file__).parent
-vectorstore_path = current_dir / "vectorstore_em_paper"
+vectorstore_path = current_dir / "vectorstore_em_paper_OpenAI" # change vector db folder here (vectorstore_em_paper_Ollama / vectorstore_em_paper_OpenAI)
 
 vector_store = FAISS.load_local(vectorstore_path, embeddings, allow_dangerous_deserialization=True)
 

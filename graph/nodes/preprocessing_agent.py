@@ -21,6 +21,7 @@ def manuscript_preprocessing_node(state: AgentState) -> AgentState:
         state[AGENT]["status"]= "success"
     except Exception as e:
         state[AGENT]["status"]= "failed"
+        print(e)
         state[AGENT]["error"].append(str(e)) # str() otherwise not JSON serializable
     return state
 

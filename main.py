@@ -135,7 +135,7 @@ def main():
     # Parallel processing
     max_workers = min(os.cpu_count(), 1)
 
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+    with ProcessPoolExecutor(max_workers=max_workers, max_tasks_per_child=1) as executor:
         # Submit alle Tasks
         futures = {executor.submit(process_single_manuscript, args): args 
                   for args in manuscripts_to_process}
