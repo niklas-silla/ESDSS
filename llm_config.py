@@ -13,7 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 
 
 # === LLM PROVIDER ===
-ACTIVE_PROVIDER: Literal["ollama", "openai"] = "openai" # switch provider
+ACTIVE_PROVIDER: Literal["ollama", "openai"] = "ollama" # switch provider
 
 # === MODEL-TYPE ===
 ACTIVE_MODE: Literal["simple", "reasoning"] = "simple"
@@ -75,3 +75,14 @@ def get_embedding():
     elif ACTIVE_PROVIDER == "openai":
         model = OPENAI_MODELS["embedding"]
         return OpenAIEmbeddings(model=model)
+    
+def get_vectorstore_path():
+    """
+    Returns the correct vectorstore path depending on the active provider.
+    """
+    if ACTIVE_PROVIDER == "ollama":
+        return "vectorstore_em_paper_Ollama"
+
+    elif ACTIVE_PROVIDER == "openai":
+        return "vectorstore_em_paper_OpenAI"
+    

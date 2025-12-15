@@ -2,7 +2,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" # required
 import numpy as np
 from pathlib import Path
-from llm_config import get_llm, get_embedding
+from llm_config import get_llm, get_embedding, get_vectorstore_path
 from pydantic import BaseModel, Field
 from langchain_community.vectorstores import FAISS
 import fitz # PyMuPDF
@@ -11,7 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 embeddings = get_embedding()
 current_dir = Path(__file__).parent
-vectorstore_path = current_dir / "vectorstore_em_paper_OpenAI" # change vector db folder here (vectorstore_em_paper_Ollama / vectorstore_em_paper_OpenAI)
+vectorstore_path = current_dir / get_vectorstore_path() 
 
 vector_store = FAISS.load_local(vectorstore_path, embeddings, allow_dangerous_deserialization=True)
 
