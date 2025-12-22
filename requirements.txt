@@ -2,9 +2,9 @@ langgraph
 langchain
 langsmith # for LangSmith integration
 pydantic
-grandalf # for graph visualization in the terminal
 docling # for PDF to Markdown conversion
 numpy<2
+transformers==4.57.1 # transformers version is important for docling
 pymupdf # for PDF pre-processing
 python-dotenv # for environment variable management
 opencv-python # OpenCV for image processing (lapalacian operator)
@@ -15,6 +15,3 @@ faiss-cpu # vectorstore
 langchain-community # for other integrations like FAISS
 feedparser # for RSS feed parsing (Arxiv)
 tqdm # progressbar 
-# Additional:
-# python -m spacy download en_core_web_md
-# python -m spacy download en_core_web_sm

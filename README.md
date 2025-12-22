@@ -1,35 +1,22 @@
-# ESDSS - Editorial Screening Decision Support System
+# ESDSS – Editorial Screening Decision Support System
 
 ## Overview
 
-ESDSS (Editorial Screening Decision Support System) is an AI-powered decision support system that automates and optimizes the editorial screening process through an intelligent multi-agent architecture.
-
-## Description
-
-The system assists editors in efficiently and consistently evaluating submitted manuscripts by employing specialized AI agents that analyze various aspects of the screening process.
-
-## Key Features
-
-- **[Features]**
-
-## Technology Stack
-
-- **Framework**: 
-- **AI/ML**: 
-- **Database**: 
-- **API**: 
+ESDSS (Editorial Screening Decision Support System) is an AI-powered decision support system designed to automate and improve the editorial screening process using an intelligent multi-agent architecture.
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/[username]/esdss.git
+git clone https://github.com/niklas-silla/esdss.git
 cd esdss
 
+# Create and activate environment
+conda create -n esdss
+conda activate esdss
+
 # Install dependencies
-pip install -r requirements.txt  # for Python
-# or
-npm install  # for Node.js
+pip install -r requirements.txt
 
 # Configure environment variables
 cp .env.example .env
@@ -38,53 +25,39 @@ cp .env.example .env
 
 ## Configuration
 
-Create a `.env` file with the following variables:
+Create a `.env` file and define the following environment variables:
 
-```
-
+```bash
+LANGSMITH_TRACING=
+LANGSMITH_ENDPOINT=
+LANGSMITH_API_KEY=
+LANGSMITH_PROJECT=
+SEMANTIC_SCHOLAR_API_KEY=
+OPENAI_API_KEY= # Only required if OpenAI models are used
 ```
 
 ## Usage
-...
 
-## Agent Architecture
+Select the language model in `llm_config.py` (Ollama or OpenAI).
 
-The system employs the following specialized agents:
+If you want to use **Ollama**, ensure that Ollama is running locally at `http://localhost:11434/` and that the following models are installed:
 
-1. **[Agent Name]**: [Agent description and responsibilities]
-2. **[Agent Name]**: [Agent description and responsibilities]
-3. **[Agent Name]**: [Agent description and responsibilities]
-4. **[Agent Name]**: [Agent description and responsibilities]
-5. **[Coordinator Agent]**: Orchestrates the agents and synthesizes recommendations
+- `gpt-oss:120b`
+- `embeddinggemma:latest`
 
-### Graphstructure
-![Graphstructure](graph.png)
+If you want to use **OpenAI**, provide your API key in the `.env` file:
 
-### Workflow
-
-1. Manuscript upload and metadata extraction
-2. Parallel analysis by specialized agents
-3. Aggregation and weighting of individual assessments
-4. Generation of final recommendation with justification
-5. Delivery to editorial review
-
-
-## Evaluation & Metrics
-
-- **Precision**: [Your metrics]
-- **Recall**: [Your metrics]
-- **Agreement with human editors**: [Your metrics]
-
-## Contact
-
-- **Project Lead**: Niklas Silla
-- **Email**: [Email]
-
-
-## Citation
-
-If you use ESDSS in your research, please cite:
-
+```bash
+OPENAI_API_KEY=sk-...
 ```
-[Your citation format]
+
+Create the manuscripts directory and copy your manuscripts into the folder.
+(Each manuscript should be placed in a separate file)
+```bash
+# Create manuscript directory
+mkdir data/manuscripts
+
+# Start the workflow
+python main.py
 ```
+

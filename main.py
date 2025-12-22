@@ -19,7 +19,7 @@ import os
 
 # for progress tracking
 PROGRESS_FILE = "data/processing_progress.json"
-MANUSCRIPT_FOLDER = Path("data/all_manuscripts")
+MANUSCRIPT_FOLDER = Path("data/manuscripts")
 
 # for evaluation
 CSV_FILE = Path("data/results.csv")
