@@ -81,9 +81,7 @@ def docling_converter(input_path: Path, output_path: Path) -> tuple[str, int, in
     """
     
     # 1. set up document converter with desired options
-    artifacts_path = "graph/nodes/docling/models" # path to docling models
-    pipeline_options = PdfPipelineOptions(artifacts_path=artifacts_path,
-                                          do_table_structure=True)
+    pipeline_options = PdfPipelineOptions(do_table_structure=True)
     pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE  # use more accurate TableFormer model
     pipeline_options.do_code_enrichment = True # enable code enrichment
     #pipeline_options.do_formula_enrichment = True # enable formula enrichment
@@ -95,7 +93,7 @@ def docling_converter(input_path: Path, output_path: Path) -> tuple[str, int, in
 
     pipeline_options.do_picture_description = True # enable picture description
     pipeline_options.picture_description_options = PictureDescriptionVlmOptions(
-        repo_id="models--HuggingFaceTB--SmolVLM-256M-Instruct",
+        repo_id="HuggingFaceTB/SmolVLM-256M-Instruct",
         prompt="Describe the image in three sentences. Be concise and accurate.",
     )
 
