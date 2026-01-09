@@ -12,10 +12,11 @@ git clone https://github.com/niklas-silla/esdss.git
 cd esdss
 
 # Create and activate environment
-conda create -n esdss
+conda create -n esdss python=3.12.12 -y
 conda activate esdss
 
 # Install dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
 
 # Configure environment variables

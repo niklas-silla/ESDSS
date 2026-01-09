@@ -128,9 +128,6 @@ def orchestrator_node(state: AgentState) -> AgentState:
             state["next_node"] = [END]
             return state  # End workflow
 
-    state["next_node"] = ["orchestrator"]
-    return state  # Stay in orchestrator to check again later
-
 
 def orchestrator_decision(state: AgentState) -> list[str]:
     """

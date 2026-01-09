@@ -1,17 +1,31 @@
-langgraph
-langchain
-langsmith # for LangSmith integration
-pydantic
-docling # for PDF to Markdown conversion
-numpy<2
+docling==2.57.0 # for PDF to Markdown conversion
+docling-core==2.49.0
+docling-ibm-models==3.10.0
+docling-parse==4.7.0
+pymupdf==1.26.5 # for PDF pre-processing
+faiss-cpu==1.13.0 # vectorstore
+feedparser==6.0.12 # for RSS feed parsing (Arxiv)
+langchain==1.0.1 # langchain components
+langchain-classic==1.0.0
+langchain-community==0.4.1 # for other integrations like FAISS
+langchain-core==1.0.4
+langchain-ollama==1.0.0 # ollama chatmodel for local llms
+langchain-openai==1.0.2 # OpenAI chatmodel 
+langchain-text-splitters==1.0.0
+langgraph==1.0.0 # langgraph components
+langgraph-checkpoint==2.1.2
+langgraph-prebuilt==1.0.0
+langgraph-sdk==0.2.9
+langsmith==0.4.37 # LangSmith monitoring
+numpy==1.26.4
+ollama==0.6.0
+openai==2.14.0
+opencv-python==4.11.0.86 # OpenCV for image processing (lapalacian operator)
+pydantic==2.12.3 # for type validation
+pydantic-settings==2.11.0
+pydantic_core==2.41.4
+python-dotenv==1.1.1 # for environment variable management
+textstat==0.7.11 # for text statistics (readability scores)
+tqdm==4.67.1 # progressbar 
 transformers==4.57.1 # transformers version is important for docling
-pymupdf # for PDF pre-processing
-python-dotenv # for environment variable management
-opencv-python # OpenCV for image processing (lapalacian operator)
-textstat # for text statistics (readability scores)
-langchain_ollama # ollama chatmodel for local llms
-langchain_openai # OpenAI chatmodel 
-faiss-cpu # vectorstore
-langchain-community # for other integrations like FAISS
-feedparser # for RSS feed parsing (Arxiv)
-tqdm # progressbar 
+rapidfuzz==3.14.3

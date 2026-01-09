@@ -133,10 +133,10 @@ def main():
         return
 
     # Parallel processing
-    max_workers = min(os.cpu_count(), 1)
+    max_workers = min(os.cpu_count(), 1) # 1 -> no parallelization for accurate time and token measurement
 
     with ProcessPoolExecutor(max_workers=max_workers, max_tasks_per_child=1) as executor:
-        # Submit alle Tasks
+        # Submit all tasks
         futures = {executor.submit(process_single_manuscript, args): args 
                   for args in manuscripts_to_process}
 
@@ -154,7 +154,7 @@ def main():
                 processed.add(m_id)
 
             else:
-                # markt as failed
+                # mark as failed
                 failed.add(f"{m_id}: {result["error"]}")
                 
 

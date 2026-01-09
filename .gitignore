@@ -3,3 +3,4 @@
 .env
 .vscode/
 graph/nodes/docling/models
+data/manuscripts

@@ -23,7 +23,7 @@ def section_check(md_manuscript_path):
         lines = f.readlines()
     for line in lines:
         # Matcht "# Heading", "## Heading", "### Heading"
-        match = re.match(r"^(#{1,3})\s+(.*)", line)
+        match = re.match(r"^(#{1,3})\s+(.*)", line) # .* any number of characters without a line break
         if match:
             title = match.group(2).strip()
             headings.append(title)
