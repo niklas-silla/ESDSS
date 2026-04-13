@@ -13,7 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 
 
 # === LLM PROVIDER ===
-ACTIVE_PROVIDER: Literal["ollama", "openai"] = "ollama" # switch provider
+ACTIVE_PROVIDER: Literal["ollama", "openai"] = "openai" # switch provider
 
 # === MODEL-TYPE ===
 ACTIVE_MODE: Literal["simple", "reasoning"] = "simple"

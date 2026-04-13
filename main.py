@@ -108,7 +108,7 @@ def main():
             progress_data = json.load(f)
             processed = set(progress_data.get("processed", []))
             failed = set(progress_data.get("failed", []))
-        print(f"Bereits verarbeitet: {len(processed)} Dateien")
+        print(f"Already processed: {len(processed)} files")
     except Exception as e:
         processed = set()
         failed = set()
