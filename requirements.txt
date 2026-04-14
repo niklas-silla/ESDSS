@@ -1,3 +1,6 @@
+fastapi==0.115.12        # web framework for the UI server
+uvicorn==0.34.2          # ASGI server
+python-multipart==0.0.20 # required for FastAPI file uploads
 docling==2.57.0 # for PDF to Markdown conversion
 docling-core==2.49.0
 docling-ibm-models==3.10.0

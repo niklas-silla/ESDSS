@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESDSS — Editorial Screening</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-name">ESDSS</span>
+        <span class="logo-sub" data-i18n="logoSub">Editorial Screening Decision Support System</span>
+      </div>
+      <div class="lang-switch">
+        <button id="btn-en" class="lang-btn active" onclick="setLang('en')">EN</button>
+        <span class="lang-divider">|</span>
+        <button id="btn-de" class="lang-btn" onclick="setLang('de')">DE</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- ════════════════════ UPLOAD SECTION ════════════════════ -->
+    <section id="sec-upload" class="section">
+      <div class="upload-hero">
+
+        <h1 class="upload-title" data-i18n="uploadTitle">Submit Manuscript for Screening</h1>
+        <p class="upload-subtitle" data-i18n="uploadSubtitle">
+          Upload a PDF manuscript to start the automated editorial screening process.
+        </p>
+
+        <div id="dropzone" class="dropzone">
+          <div class="dropzone-icon">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9"  y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <p class="dropzone-text" data-i18n="dropHere">Drop your manuscript here</p>
+          <p class="dropzone-sub"  data-i18n="dropOr">or click to select a PDF file</p>
+          <input type="file" id="file-input" accept=".pdf" hidden />
+        </div>
+
+        <p id="upload-error" class="upload-error hidden"></p>
+      </div>
+
+      <!-- ── Previous submissions ── -->
+      <div id="previous-section" class="previous-section hidden">
+        <div class="previous-header">
+          <span class="previous-title" data-i18n="previousTitle">Previous Submissions</span>
+        </div>
+        <div id="previous-list" class="previous-list">
+          <!-- filled by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ════════════════════ PROCESSING SECTION ════════════════════ -->
+    <section id="sec-processing" class="section hidden">
+
+      <div class="processing-header">
+        <div class="file-badge">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span id="proc-filename">manuscript.pdf</span>
+        </div>
+        <p class="processing-note" data-i18n="processingNote">
+          This may take several minutes depending on the model configuration.
+        </p>
+      </div>
+
+      <!-- ── Stepper ── -->
+      <div class="stepper">
+
+        <!-- Step 1: Preprocessing -->
+        <div class="step" id="step-preprocessing" data-status="pending">
+          <div class="step-indicator">
+            <div class="step-icon">
+              <span class="si-num">1</span>
+              <span class="si-spinner hidden"></span>
+              <span class="si-check hidden">✓</span>
+              <span class="si-cross hidden">✗</span>
+            </div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-label" data-i18n="stepPreprocessing">Preprocessing</span>
+              <span class="step-dur" id="dur-preprocessing"></span>
+            </div>
+            <p class="step-desc" data-i18n="stepPreprocessingDesc">
+              Extracting text, tables, and figures from the manuscript PDF.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2: Criterion Analysis -->
+        <div class="step" id="step-criteria" data-status="pending">
+          <div class="step-indicator">
+            <div class="step-icon">
+              <span class="si-num">2</span>
+              <span class="si-spinner hidden"></span>
+              <span class="si-check hidden">✓</span>
+              <span class="si-cross hidden">✗</span>
+            </div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-label" data-i18n="stepCriteria">Criterion Analysis</span>
+            </div>
+            <p class="step-desc" data-i18n="stepCriteriaDesc">
+              Running six evaluation agents in sequence.
+            </p>
+            <div class="agent-grid" id="agent-grid">
+              <!-- filled by app.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Report Generation -->
+        <div class="step step-last" id="step-report" data-status="pending">
+          <div class="step-indicator">
+            <div class="step-icon">
+              <span class="si-num">3</span>
+              <span class="si-spinner hidden"></span>
+              <span class="si-check hidden">✓</span>
+              <span class="si-cross hidden">✗</span>
+            </div>
+          </div>
+          <div class="step-content">
+            <div class="step-header">
+              <span class="step-label" data-i18n="stepReport">Report Generation</span>
+              <span class="step-dur" id="dur-report"></span>
+            </div>
+            <p class="step-desc" data-i18n="stepReportDesc">
+              Synthesising all agent results into a final editorial decision.
+            </p>
+          </div>
+        </div>
+
+      </div><!-- /stepper -->
+
+      <div id="proc-error" class="proc-error hidden"></div>
+
+    </section>
+
+    <!-- ════════════════════ RESULTS SECTION ════════════════════ -->
+    <section id="sec-results" class="section hidden">
+
+      <!-- Back navigation -->
+      <div class="results-nav">
+        <button class="btn-back" onclick="resetToUpload()">
+          <span class="btn-back-arrow">←</span>
+          <span data-i18n="backToOverview">Back to Overview</span>
+        </button>
+      </div>
+
+      <!-- Manuscript name -->
+      <h2 id="result-manuscript-name" class="result-manuscript-name"></h2>
+
+      <!-- Decision banner -->
+      <div id="decision-banner" class="decision-banner">
+        <div class="decision-icon" id="decision-icon"></div>
+        <div>
+          <div class="decision-label" data-i18n="decisionLabel">Decision</div>
+          <div class="decision-verdict" id="decision-verdict"></div>
+        </div>
+      </div>
+
+      <!-- Metrics row -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <span class="metric-value" id="metric-duration">—</span>
+          <span class="metric-label" data-i18n="metricDuration">Total Duration</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" id="metric-tokens-in">—</span>
+          <span class="metric-label" data-i18n="metricTokensIn">Input Tokens</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" id="metric-tokens-out">—</span>
+          <span class="metric-label" data-i18n="metricTokensOut">Output Tokens</span>
+        </div>
+      </div>
+
+      <!-- Final report -->
+      <div class="card">
+        <h3 class="card-title" data-i18n="finalReport">Final Report</h3>
+        <p id="final-report-text" class="report-text"></p>
+      </div>
+
+      <!-- Agent details accordion -->
+      <div class="card">
+        <h3 class="card-title" data-i18n="agentDetails">Agent Details</h3>
+        <div id="accordion" class="accordion">
+          <!-- filled by app.js -->
+        </div>
+      </div>
+
+      <!-- New submission -->
+      <div class="results-footer">
+        <button class="btn-primary" onclick="resetToUpload()" data-i18n="newSubmission">
+          New Submission
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
