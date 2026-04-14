@@ -4,3 +4,5 @@
 .vscode/
 graph/nodes/docling/models
 data/
+logs/
+.server.pid

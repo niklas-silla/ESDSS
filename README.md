@@ -52,13 +52,27 @@ If you want to use **OpenAI**, provide your API key in the `.env` file:
 OPENAI_API_KEY=sk-...
 ```
 
-Create the manuscripts directory and copy your manuscripts into the folder.
-(Each manuscript should be placed in a separate file)
-```bash
-# Create manuscript directory
-mkdir data/manuscripts
+### Starting the application
 
-# Start the workflow
-python main.py
+**Option 1 — Desktop shortcut (recommended for non-technical users)**
+
+Run once to create a desktop icon:
+
+```bash
+python create_shortcut.py
+```
+
+From then on, double-click **ESDSS** on your Desktop. The server starts in the background and your browser opens automatically.
+
+**Option 2 — Manual start**
+
+```bash
+python start.py
+```
+
+Or the traditional way:
+
+```bash
+uvicorn server:app --port 8000
 ```
 
