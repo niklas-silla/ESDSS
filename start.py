@@ -19,6 +19,73 @@ URL = f"http://localhost:{PORT}"
 PID_FILE = REPO_DIR / ".server.pid"
 LOG_FILE = REPO_DIR / "logs" / "server.log"
 
+SYSTEM = platform.system()
+
+
+# ---------------------------------------------------------------------------
+# Visible error dialog (so failures are never silent when launched as .app)
+# ---------------------------------------------------------------------------
+
+def show_error(msg: str):
+    if SYSTEM == "Darwin":
+        safe = msg.replace('"', "'")
+        subprocess.run([
+            "osascript", "-e",
+            f'display dialog "{safe}" buttons {{"OK"}} default button "OK" with title "ESDSS – Error"'
+        ])
+    elif SYSTEM == "Windows":
+        subprocess.run(
+            ["powershell", "-Command",
+             f'[System.Windows.Forms.MessageBox]::Show("{msg}", "ESDSS – Error")'],
+            capture_output=True
+        )
+    else:
+        print(f"ERROR: {msg}", file=sys.stderr)
+
+
+# ---------------------------------------------------------------------------
+# Find uvicorn – checks every likely location before giving up
+# ---------------------------------------------------------------------------
+
+def find_uvicorn() -> str | None:
+    candidates = []
+
+    # 1. Same Python environment that is running this script right now
+    python_dir = Path(sys.executable).parent
+    candidates.append(python_dir / ("uvicorn.exe" if SYSTEM == "Windows" else "uvicorn"))
+
+    # 2. Local venv inside the repo
+    if SYSTEM == "Windows":
+        candidates.append(REPO_DIR / "venv" / "Scripts" / "uvicorn.exe")
+    else:
+        candidates.append(REPO_DIR / "venv" / "bin" / "uvicorn")
+
+    # 3. Common conda environment locations (env name = esdss)
+    conda_roots = [
+        Path.home() / "anaconda3",
+        Path.home() / "miniconda3",
+        Path("/opt/homebrew/anaconda3"),
+        Path("/opt/homebrew/miniconda3"),
+        Path("/opt/anaconda3"),
+        Path("/usr/local/anaconda3"),
+        Path("/usr/local/miniconda3"),
+    ]
+    for root in conda_roots:
+        if SYSTEM == "Windows":
+            candidates.append(root / "envs" / "esdss" / "Scripts" / "uvicorn.exe")
+        else:
+            candidates.append(root / "envs" / "esdss" / "bin" / "uvicorn")
+
+    for c in candidates:
+        if c.exists():
+            return str(c)
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Server lifecycle
+# ---------------------------------------------------------------------------
 
 def server_is_running() -> bool:
     try:
@@ -38,14 +105,12 @@ def kill_old_server():
             pass
         PID_FILE.unlink(missing_ok=True)
 
-    # Also free port 8000 if something else holds it
-    system = platform.system()
-    if system in ("Darwin", "Linux"):
+    if SYSTEM in ("Darwin", "Linux"):
         subprocess.run(
             f"lsof -ti:{PORT} | xargs kill -9",
             shell=True, capture_output=True
         )
-    elif system == "Windows":
+    elif SYSTEM == "Windows":
         result = subprocess.run(
             f"netstat -ano | findstr :{PORT}",
             shell=True, capture_output=True, text=True
@@ -53,54 +118,28 @@ def kill_old_server():
         for line in result.stdout.splitlines():
             parts = line.split()
             if parts:
-                pid = parts[-1]
-                subprocess.run(f"taskkill /PID {pid} /F", shell=True, capture_output=True)
+                subprocess.run(f"taskkill /PID {parts[-1]} /F",
+                               shell=True, capture_output=True)
 
 
-def find_uvicorn() -> str:
-    """Return the uvicorn executable path, preferring the active venv."""
-    system = platform.system()
-
-    # Check local venv first
-    if system == "Windows":
-        venv_uvicorn = REPO_DIR / "venv" / "Scripts" / "uvicorn.exe"
-    else:
-        venv_uvicorn = REPO_DIR / "venv" / "bin" / "uvicorn"
-
-    if venv_uvicorn.exists():
-        return str(venv_uvicorn)
-
-    # Fall back to whatever is on PATH
-    return "uvicorn"
-
-
-def start_server():
+def start_server(uvicorn: str):
     LOG_FILE.parent.mkdir(exist_ok=True)
     (REPO_DIR / "data" / "manuscripts").mkdir(parents=True, exist_ok=True)
 
-    uvicorn = find_uvicorn()
     log = open(LOG_FILE, "a")
 
-    system = platform.system()
-    if system == "Windows":
-        # CREATE_NO_WINDOW prevents a console window from flashing
-        proc = subprocess.Popen(
-            [uvicorn, "server:app", "--port", str(PORT)],
-            cwd=REPO_DIR,
-            stdout=log,
-            stderr=log,
-            creationflags=subprocess.CREATE_NO_WINDOW,
-        )
-    else:
-        proc = subprocess.Popen(
-            [uvicorn, "server:app", "--port", str(PORT)],
-            cwd=REPO_DIR,
-            stdout=log,
-            stderr=log,
-        )
+    flags = {}
+    if SYSTEM == "Windows":
+        flags["creationflags"] = subprocess.CREATE_NO_WINDOW
 
+    proc = subprocess.Popen(
+        [uvicorn, "server:app", "--port", str(PORT)],
+        cwd=REPO_DIR,
+        stdout=log,
+        stderr=log,
+        **flags,
+    )
     PID_FILE.write_text(str(proc.pid))
-    return proc
 
 
 def wait_for_server(timeout: int = 60) -> bool:
@@ -112,33 +151,49 @@ def wait_for_server(timeout: int = 60) -> bool:
 
 
 def open_browser():
-    system = platform.system()
-    if system == "Darwin":
+    if SYSTEM == "Darwin":
         subprocess.run(["open", URL])
-    elif system == "Windows":
+    elif SYSTEM == "Windows":
         os.startfile(URL)
     else:
         subprocess.run(["xdg-open", URL])
 
 
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main():
-    # If already running just open the browser
-    if server_is_running():
+    try:
+        # Already running → just open the browser
+        if server_is_running():
+            open_browser()
+            return
+
+        uvicorn = find_uvicorn()
+        if uvicorn is None:
+            show_error(
+                "Could not find uvicorn.\n\n"
+                "Make sure the 'esdss' conda environment is installed\n"
+                "or that you have run: pip install -r requirements.txt"
+            )
+            sys.exit(1)
+
+        kill_old_server()
+        start_server(uvicorn)
+
+        if not wait_for_server():
+            show_error(
+                "The server did not start within 60 seconds.\n\n"
+                f"Check the log for details:\n{LOG_FILE}"
+            )
+            sys.exit(1)
+
         open_browser()
-        return
 
-    kill_old_server()
-    start_server()
-
-    ready = wait_for_server()
-    if not ready:
-        print(
-            "Server did not start within 60 seconds.\n"
-            f"Check the log for details: {LOG_FILE}"
-        )
-        sys.exit(1)
-
-    open_browser()
+    except Exception as exc:
+        show_error(f"Unexpected error:\n{exc}")
+        raise
 
 
 if __name__ == "__main__":

@@ -8,23 +8,52 @@ import sys
 import stat
 import platform
 import textwrap
+import subprocess
 from pathlib import Path
 
 REPO_DIR = Path(__file__).parent.resolve()
 START_SCRIPT = REPO_DIR / "start.py"
 DESKTOP = Path.home() / "Desktop"
+SYSTEM = platform.system()
 
-# Find the Python executable that is running this script
-PYTHON = sys.executable
+
+def find_python_with_uvicorn() -> str:
+    """Return the Python executable that can import uvicorn."""
+    candidates = [sys.executable]
+
+    conda_roots = [
+        Path.home() / "anaconda3",
+        Path.home() / "miniconda3",
+        Path("/opt/homebrew/anaconda3"),
+        Path("/opt/homebrew/miniconda3"),
+        Path("/opt/anaconda3"),
+        Path("/usr/local/anaconda3"),
+        Path("/usr/local/miniconda3"),
+    ]
+    suffix = "Scripts/python.exe" if SYSTEM == "Windows" else "bin/python"
+    for root in conda_roots:
+        candidates.append(root / "envs" / "esdss" / suffix)
+
+    for c in candidates:
+        path = str(c)
+        result = subprocess.run(
+            [path, "-c", "import uvicorn"],
+            capture_output=True
+        )
+        if result.returncode == 0:
+            return path
+
+    # Nothing found — return sys.executable and let start.py show the error
+    return sys.executable
 
 
 def create_macos():
+    python = find_python_with_uvicorn()
     app = DESKTOP / "ESDSS.app"
     macos_dir = app / "Contents" / "MacOS"
     macos_dir.mkdir(parents=True, exist_ok=True)
 
-    # Info.plist
-    (app / "Contents" / "Info.plist").write_text(textwrap.dedent(f"""\
+    (app / "Contents" / "Info.plist").write_text(textwrap.dedent("""\
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
             "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -40,16 +69,50 @@ def create_macos():
             <string>1.0</string>
             <key>CFBundlePackageType</key>
             <string>APPL</string>
+            <key>LSUIElement</key>
+            <false/>
         </dict>
         </plist>
     """))
 
-    # Launcher executable inside the .app
+    # The launcher sources conda (for PATH) then calls start.py with the
+    # correct Python. This is necessary because macOS .app bundles launch
+    # with a stripped PATH that doesn't include conda or homebrew.
+    conda_sources = "\n".join(
+        f'[ -f "{root}/etc/profile.d/conda.sh" ] && source "{root}/etc/profile.d/conda.sh" && conda activate esdss 2>/dev/null && break'
+        for root in [
+            str(Path.home() / "anaconda3"),
+            str(Path.home() / "miniconda3"),
+            "/opt/homebrew/anaconda3",
+            "/opt/homebrew/miniconda3",
+            "/opt/anaconda3",
+            "/usr/local/anaconda3",
+        ]
+    )
+
     launcher = macos_dir / "ESDSS"
-    launcher.write_text(f'#!/bin/bash\n"{PYTHON}" "{START_SCRIPT}"\n')
+    launcher.write_text(textwrap.dedent(f"""\
+        #!/bin/bash
+        # Source conda so uvicorn and all packages are on PATH
+        for _conda_root in \\
+            "$HOME/anaconda3" "$HOME/miniconda3" \\
+            "/opt/homebrew/anaconda3" "/opt/homebrew/miniconda3" \\
+            "/opt/anaconda3" "/usr/local/anaconda3"; do
+            if [ -f "$_conda_root/etc/profile.d/conda.sh" ]; then
+                source "$_conda_root/etc/profile.d/conda.sh"
+                conda activate esdss 2>/dev/null
+                break
+            fi
+        done
+
+        # Also activate local venv as fallback
+        [ -f "{REPO_DIR}/venv/bin/activate" ] && source "{REPO_DIR}/venv/bin/activate"
+
+        "{python}" "{START_SCRIPT}"
+    """))
     launcher.chmod(launcher.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
-    # Remove quarantine flag so macOS doesn't block it
+    # Remove quarantine so macOS doesn't block it on first run
     os.system(f'xattr -cr "{app}" 2>/dev/null')
 
     print(f"Shortcut created: {app}")
@@ -57,17 +120,18 @@ def create_macos():
 
 
 def create_windows():
+    python = find_python_with_uvicorn()
     shortcut = DESKTOP / "ESDSS.vbs"
-    # VBScript launches start.py without showing a console window
     shortcut.write_text(textwrap.dedent(f"""\
         Set WshShell = CreateObject("WScript.Shell")
-        WshShell.Run Chr(34) & "{PYTHON}" & Chr(34) & " " & Chr(34) & "{START_SCRIPT}" & Chr(34), 0, False
+        WshShell.Run Chr(34) & "{python}" & Chr(34) & " " & Chr(34) & "{START_SCRIPT}" & Chr(34), 0, False
     """))
     print(f"Shortcut created: {shortcut}")
     print("Double-click ESDSS on your Desktop to launch the application.")
 
 
 def create_linux():
+    python = find_python_with_uvicorn()
     shortcut = DESKTOP / "ESDSS.desktop"
     shortcut.write_text(textwrap.dedent(f"""\
         [Desktop Entry]
@@ -75,7 +139,7 @@ def create_linux():
         Type=Application
         Name=ESDSS
         Comment=Editorial Screening Decision Support System
-        Exec={PYTHON} {START_SCRIPT}
+        Exec={python} {START_SCRIPT}
         Terminal=false
         Categories=Science;
     """))
@@ -85,20 +149,16 @@ def create_linux():
 
 
 def main():
-    if not DESKTOP.exists():
-        print(f"Desktop folder not found at: {DESKTOP}")
-        print("Please move the created shortcut file manually.")
-        DESKTOP.mkdir(exist_ok=True)
+    DESKTOP.mkdir(exist_ok=True)
 
-    system = platform.system()
-    if system == "Darwin":
+    if SYSTEM == "Darwin":
         create_macos()
-    elif system == "Windows":
+    elif SYSTEM == "Windows":
         create_windows()
-    elif system == "Linux":
+    elif SYSTEM == "Linux":
         create_linux()
     else:
-        print(f"Unsupported OS: {system}")
+        print(f"Unsupported OS: {SYSTEM}")
         sys.exit(1)
 
 
